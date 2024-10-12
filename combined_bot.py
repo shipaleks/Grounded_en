@@ -974,20 +974,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     # Формирование нового приветственного сообщения
     greeting_message = (
-        f"Привет! 🤖 Я ваш умный помощник по анализу опросов.\n\n"
-        f"🧠 *Что я умею:*\n"
-        f"• Автоматически анализирую открытые ответы из ваших опросов с помощью AI\n"
-        f"• Категоризирую ответы для удобства обработки и анализа\n\n"
-        f"⚡ *Почему я лучше традиционных методов:*\n"
-        f"• *Скорость:* Обрабатываю 1000 ответов всего за 5 минут — вместо целого рабочего дня у агентства\n"
-        f"• *Экономия:* Стоимость 1⭐️ (около 2 ₽) за ответ — против 5 ₽ в агентствах\n\n"
-        f"💰 *Выгода:*\n"
-        f"За всё время использования бота клиенты сэкономили *{total_money_saved_str}* и *{total_time_saved_str}* по сравнению с обработкой вручную.\n\n"
-        f"🎁 *Специальное предложение:*\n"
-        f"Попробуйте бесплатно! Проанализируйте *2000 ответов бесплатно* и оцените качество сервиса без риска.\n\n"
-        f"🚀 *Готовы начать?*\n"
-        f"*Загрузите ваш файл с данными (.xlsx или .csv).*\n"
-        f"В файле должна быть только одна вкладка."
+        f"Hello! 🤖 I'm your smart survey analysis assistant.\n\n"
+        f"🧠 *What I can do:*\n"
+        f"- Automatically analyze open-ended responses from your surveys using AI\n"
+        f"- Categorize responses for easy processing and analysis\n\n"
+        f"⚡ *Why I'm better than traditional methods:*\n"
+        f"• - Speed: I process 1000 responses in just 5 minutes — instead of a full workday at an agency\n"
+        f"• - Savings: Cost of 5⭐️ (about $0.13) per response — compared to $0.50 in agencies\n\n"
+        f"💰 *Benefits:*\n"
+        f"Throughout the bot's usage, clients have saved *{total_money_saved_str}* and *{total_time_saved_str}* compared to manual processing.\n\n"
+        f"🎁 *Special offer:*\n"
+        f"Try it for free! Analyze *2000 responses for free* and evaluate the service quality without risk.\n\n"
+        f"🚀 *Ready to start?*\n"
+        f"*Upload your data file (.xlsx or .csv).*\n"
+        f"The file should have only one sheet."
             )
 
     await update.message.reply_text(greeting_message, parse_mode='Markdown')
