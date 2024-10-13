@@ -144,145 +144,139 @@ def suggest_categories(df, open_answer_column, existing_categories, survey_quest
     sample_answers_text = "\n".join(sample_answers)
 
     prompt = f"""
-<цель>
-Вы опытный маркет рисёчер с опытом анализа открытых ответов в опросах. Вам поручено проанализировать открытые ответы в опроснике и предложить категории для классификации.
-</цель>
+<goal>
+You are an experienced market researcher with expertise in analyzing open-ended survey responses. You have been tasked with analyzing open-ended responses in a questionnaire and suggesting categories for classification.
+</goal>
 
-<вопрос>
-Вопрос опроса: {survey_question}
-</вопрос>
+<question>
+Survey question: {survey_question}
+</question>
 
-<задача>
-Проанализируйте следующие ответы на открытый вопрос и предложите категории для их классификации, опираясь на примеры категорий, представленные ниже, и учитывая контекст вопроса.
+<task>
+Analyze the following responses to the open-ended question and suggest categories for their classification, based on the example categories presented below, and considering the context of the question.
 {existing_categories_text}
-Ответы:
+Responses:
 {sample_answers_text}
-</задача>
-
-<примеры>
-Внимательно прочитайте вопросы и примеры категорий из других исследований, чтобы понять, на что могут быть похожи категории:
-## пример1
-Вопрос: Что вам нравится в Яндексе?
-Ответы:
-Привычный / Родной / Давно пользуюсь / Постоянно пользуюсь,
-Надежный,
-Удобный,
-Быстрый,
-Простой / понятный,
-Находит то что нужно / точный,
-Найдет все,
-Многофункциональный / Много сервисов / Все в одном месте,
-Российский / Отечественный,
-Лучше подходит для поиска в России / рядом со мной,
-Понимает / учитывает мои интересы,
-Доверяю ему / Достоверный,
-Красивый / Стильный / Нравится интерфейс,
-Пользуюсь другими сервисами бренда,
-Современный / Прогрессивный / Идет в ногу со временем,
-Лучший / лучше других,
-Популярный / На слуху,
-Лучше ищет по зарубежным сайтам,
-Мало рекламы,
-Ненавязчивый (не навязывает контент / сервисы),
-Минималистичный / лаконичный (не пестрый / не кричащий / не отвлекает),
-Подходит в качестве альтернативного поиска,
-Предустановлен на смартфонах / в браузере,
-Голосовой помощник / Алиса,
-Нейросети / ИИ,
-Переводчик,
-Безопасный,
-Голосовой поиск,
-Поиск по картинкам,
-Поиск по картинке / фото,
-Подходит для некоторых задач,
-Нравится / хороший поисковик / все ок / почти нет недостатков,
-Не пользуюсь / пользуюсь редко / непривычен,
-Есть недочеты / Другие лучше,
-Перегруженный / Много лишнего / Пестрый,
-Неудобный интерфейс,
-Много рекламы,
-Плохо ищет,
-Плохой дизайн,
-Не вызывает доверия,
-Навязчиво себя рекламирует,
-Следит за пользователями,
-Прогосударственный,
-Цензура,
-Монополист,
-Медленный / тормозит,
-Хуже подходит для поиска в России / рядом со мной,
-Плохой картиночный поиск,
-Иностранный продукт,
-Сервисы компании без разрешения устанавливаются на компьютер,
-Непопулярен,
-Сбои / ошибки,
-Недовольство другими сервисами бренда,
-Не нравится / есть недостатки,
-Нет ответа,
-Принципиально не рекомендую
-
-
-## пример2
-Вопрос: Почему вы не разрешаете использовать гаджеты при подготовке домашнего задания?
-Ответы:
-Ребенок должен уметь думать / решать сам,
-Чтобы не списывал / не использовал ГДЗ,
-Нужно уметь пользоваться учебником и самому искать информацию,
-Ребенок не развивается / тупеет (проблемы с логикой, развитием мышления и памяти, фантазией и т.п.),
-Ребенок привыкает лениться / слишком расслабляется,
-Отвлекают от учебы,
-Портят зрение,
-Рано использовать гаджеты,
-Нет необходимости / все есть в учебниках - можно найти там
-
-## пример3
-Вопрос: Опишите, пожалуйста, свои впечатления. Что именно вам понравилось или не понравилось?
-Ответы:
-Понравилась идея (без уточнения),
-Понятное / доступное описание,
-Полезно / Удобно,
-Новинка / Интересно / Современно,
-Помощь от ИИ / Алисы / технологичность,
-Помощник / помощь в обучении,
-Помогает ребенку - помогает разобраться с заданием и обьясняет тему или решение и логику,
-Помогает ребенку - ищет ответы на вопросы/дает ответы на вопросы/можно спросить,
-Помощник с ДЗ - выучить уроки, сделать ДЗ,
-Помощник - дает подсказки,
-Упрощает жизнь родителей - экономит время / обьясняет за них / заменяет ребенку родителей,
-Дополнительные занятия - возможность развития и обучения / расширение кругозора ребенка,
-Самостоятельная работа ребенка (сам занимается и разбирается в материале / делет задание без привлечения других),
-Аналог репетитора  - заменяет живого человека,
-Индивидуальный подход к ребенку / учитывает особенности ребенка,
-Контроль заданий и анализ ответов ребенка / проверка правильности решения заданий,
-Возможность давать материал для закрепления/ примеры похожих заданий,
-Пошаговое выполнение заданий,
-Актуальность идеи,
-Скорость выполнения задания/ Быстро сделать ДЗ/ Быстро найти ответ,
-Вызывет интерес у детей будет интересно заниматься/ Повысит мотивацию,
-Отсутствие живого общения / Человека нельзя заменить / Отсутствие заботы со стороны родителей,
-Гаджеты / телефон / интернет отвлекают  и негативно сказываются на обучении,
-Недоверие инновациям и технологиям (негативный отзыв от нейросетях в т.ч.),
-Непонятное описание / недостаточно информации/необходимо пробовать/надо смотреть как будет работать,
-Неактуально для нас,
-Ребенок перестает думать / просто списывает (не развивается / не учится / не думает),
-Делает ДЗ за ребенка/ Покажет готовое решение и ответ
-</примеры>
-
-
-<инструкция>
-Предложите до {max_categories} дополнительных категорий, которые охватывают основные темы, представленные в ответах, учитывая контекст вопроса опроса. Они должны быть похожи на категории из примеров или даже прямо их повторять, если тематика вопросов подходит.
-Следуйте этим рекомендациям:
-1. Убедитесь, что предлагаемые категории отличаются от примеров.
-2. Категории должны быть достаточно широкими, чтобы сгруппировать похожие ответы, но достаточно конкретными, чтобы быть значимыми.
-3. Категории должны максимально полно покрывать имеющиеся ответы и не повторять друг друга.
-4. Категорий может быть несколько, но для коротких односложных ответов нужно использовать только одну, наиболее подходящую категорию.
-5. Используйте русский язык для названий категорий, за исключением международных брендов, которые должны использовать свои официальные английские названия.
-6. Сосредоточьтесь на повторяющихся темах, ключевых понятиях и примечательных упоминаниях в выборочных ответах.
-7. Учитывайте как позитивные, так и негативные настроения, если они присутствуют в ответах.
-8. Если применимо, включите категории, связанные с характеристиками продукта, опытом клиентов или конкретными случаями использования, упомянутыми в ответах.
-Ваш результат должен представлять собой список предложенных категорий, разделенных запятыми, без нумерации и дополнительных пояснений. Внутри категории ни в коем случае не должно быть запятых. Не включайте в список существующие категории.
-Верните только список категорий, разделенных запятыми.
-</инструкция>
+</task>
+<examples>
+Carefully read the questions and examples of categories from other studies to understand what the categories might look like:
+## example1
+Question: What do you like about Yandex?
+Responses:
+Familiar / Native / Have been using for a long time / Use constantly,
+Reliable,
+Convenient,
+Fast,
+Simple / understandable,
+Finds what you need / accurate,
+Finds everything,
+Multifunctional / Many services / Everything in one place,
+Russian / Domestic,
+Better suited for searching in Russia / near me,
+Understands / takes into account my interests,
+I trust it / Trustworthy,
+Beautiful / Stylish / Like the interface,
+I use other brand services,
+Modern / Progressive / Keeps up with the times,
+The best / better than others,
+Popular / Well-known,
+Searches better on foreign sites,
+Little advertising,
+Unobtrusive (doesn't impose content / services),
+Minimalist / laconic (not gaudy / not flashy / not distracting),
+Suitable as an alternative search,
+Pre-installed on smartphones / in the browser,
+Voice assistant / Alice,
+Neural networks / AI,
+Translator,
+Safe,
+Voice search,
+Image search,
+Image / photo search,
+Suitable for some tasks,
+Like it / good search engine / everything is ok / almost no drawbacks,
+Don't use / rarely use / unfamiliar,
+Has flaws / Others are better,
+Overloaded / Too much unnecessary stuff / Gaudy,
+Inconvenient interface,
+Too much advertising,
+Poor search,
+Bad design,
+Doesn't inspire trust,
+Aggressively advertises itself,
+Tracks users,
+Pro-government,
+Censorship,
+Monopolist,
+Slow / lags,
+Worse for searching in Russia / near me,
+Poor image search,
+Foreign product,
+Company services are installed on the computer without permission,
+Unpopular,
+Glitches / errors,
+Dissatisfaction with other brand services,
+Don't like / has drawbacks,
+No answer,
+Fundamentally do not recommend
+## example2
+Question: Why don't you allow the use of gadgets when preparing homework?
+Responses:
+The child should be able to think / solve problems on their own,
+To prevent copying / using ready-made homework solutions,
+Need to be able to use the textbook and search for information independently,
+The child doesn't develop / becomes dull (problems with logic, development of thinking and memory, imagination, etc.),
+The child gets used to being lazy / too relaxed,
+Distracts from studying,
+Harms eyesight,
+Too early to use gadgets,
+No need / everything is in the textbooks - can be found there
+## example3
+Question: Please describe your impressions. What exactly did you like or dislike?
+Responses:
+Liked the idea (without specification),
+Clear / accessible description,
+Useful / Convenient,
+Novelty / Interesting / Modern,
+Help from AI / Alice / technological,
+Assistant / help in learning,
+Helps the child - helps to understand the task and explains the topic or solution and logic,
+Helps the child - searches for answers to questions / provides answers to questions / can ask,
+Homework assistant - learn lessons, do homework,
+Assistant - gives hints,
+Simplifies parents' lives - saves time / explains for them / replaces parents for the child,
+Additional classes - opportunity for development and learning / expanding the child's horizons,
+Independent work of the child (studies and understands the material on their own / does the task without involving others),
+Tutor analogue - replaces a live person,
+Individual approach to the child / takes into account the child's characteristics,
+Control of tasks and analysis of the child's answers / checking the correctness of task solutions,
+Ability to provide material for reinforcement / examples of similar tasks,
+Step-by-step task completion,
+Relevance of the idea,
+Speed of task completion / Quick homework / Quick answer finding,
+Generates interest in children will be interesting to study / Will increase motivation,
+Lack of live communication / A person cannot be replaced / Lack of care from parents,
+Gadgets / phone / internet distract and negatively affect learning,
+Distrust of innovations and technologies (negative feedback about neural networks, etc.),
+Unclear description / insufficient information / need to try / need to see how it will work,
+Not relevant for us,
+The child stops thinking / just copies (doesn't develop / doesn't learn / doesn't think),
+Does homework for the child / Shows ready-made solution and answer
+</examples>
+<instruction>
+Suggest up to {max_categories} additional categories that cover the main themes presented in the responses, considering the context of the survey question. They should be similar to the categories from the examples or even directly repeat them if the topic of the questions is suitable.
+Follow these recommendations:
+1. Make sure that the proposed categories differ from the examples.
+2. Categories should be broad enough to group similar answers, but specific enough to be meaningful.
+3. Categories should cover the existing answers as fully as possible and not repeat each other.
+4. There can be several categories, but for short one-word answers, use only one, the most appropriate category.
+5. Use English language for category names.
+6. Focus on recurring themes, key concepts, and notable mentions in the sample answers.
+7. Consider both positive and negative sentiments if they are present in the responses.
+8. If applicable, include categories related to product characteristics, customer experiences, or specific use cases mentioned in the responses.
+Your result should be a list of proposed categories, separated by commas, without numbering and additional explanations. There should be no commas within a category under any circumstances. Do not include existing categories in the list.
+Return only a list of categories separated by commas.
+</instruction>
 """
 
     try:
@@ -291,7 +285,7 @@ def suggest_categories(df, open_answer_column, existing_categories, survey_quest
             messages=[
                 {
                     "role": "system",
-                    "content": "Вы опытный маркет рисёчер с опытом анализа открытых ответов в опросах.",
+                    "content": "You are an experienced market reader with experience in analysing open responses in surveys.",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -307,10 +301,10 @@ def suggest_categories(df, open_answer_column, existing_categories, survey_quest
         ]
 
         # Всегда добавляем "Другое" и "Нерелевантный ответ", если их нет
-        if "Другое" not in suggested_categories and "Другое" not in existing_categories:
-            suggested_categories.append("Другое")
-        if "Нерелевантный ответ" not in suggested_categories and "Нерелевантный ответ" not in existing_categories:
-            suggested_categories.append("Нерелевантный ответ")
+        if "Other" not in suggested_categories and "Irrelevant" not in existing_categories:
+            suggested_categories.append("Other")
+        if "Нерелевантный ответ" not in suggested_categories and "Irrelevant" not in existing_categories:
+            suggested_categories.append("Irrelevant")
 
         return suggested_categories
     except Exception as e:
@@ -360,20 +354,20 @@ def categorize_answers(df, open_answer_column, categories):
 
     def create_messages(answer, categories):
         categories_list = ", ".join(categories)
-        system_message = "Вы опытный аналитик в области Market Research."
+        system_message = "You are an experienced analyst in Market Research."
         user_message = f"""
-Ваша задача: на основании данного открытого ответа определить, к каким категориям он относится.
+Your task: based on the given open-ended answer, determine which categories it belongs to.
 
-Категории: {categories_list}
+Categories: {categories_list}
 
-Ответ: "{answer}"
+Answer: "{answer}"
 
-Проанализируйте ответ и укажите наиболее подходящие категории из предоставленного списка. Если ответ бессодержательный или пустой ("nan"), отнесите его к категории "Нерелевантный ответ". Если ответ содержательный, но не соответствует ни одной предложенной категории, отнесите его к категории "Другое". Убедитесь, что среди предложенных категорий нет похожих на "Другое", например, "Не знаю", и если есть, используйте их. Не используйте категории "Другое" и "Нерелевантный ответ" вместе с другими категориями. Не используйте категории "Другое" и "Нерелевантный ответ" вовсе без необходимости, особенно если есть более подходящие категории. Обоснуйте свой выбор.
+Analyse the response and indicate the most appropriate categories from the list provided. If the answer is empty or empty (‘nan’), categorise it as ‘Irrelevant’. If the answer is meaningful but does not fit any of the suggested categories, categorise it as ‘Other’. Make sure that there are no categories similar to ‘Other’, such as ‘Don't Know’, and if there are, use them. Do not use the categories ‘Other’ and ‘Irrelevant’ with other categories. Do not use the ‘Other’ and ‘Irrelevant’ categories unnecessarily, especially if there are more appropriate categories. Justify your choices.
 
-Верните результат в формате:
+Return the result in the format:
 
-Обоснование: [краткое обоснование выбора категорий]
-Категории: [список категорий через запятую]
+Rationale: [brief rationale for your choice of categories].
+Categories: [comma separated list of categories].
 """
         return [
             {"role": "system", "content": system_message},
@@ -468,17 +462,18 @@ def test_categorizations(
         categories_list = ", ".join(categories)
         system_message = "Вы опытный аналитик в области Market Research."
         user_message = f"""
-Ваша задача: на основании данного открытого ответа определить, к каким категориям он относится.
+Your task: based on the given open-ended answer, determine which categories it belongs to.
 
-Категории: {categories_list}
+Categories: {categories_list}
 
-Ответ: "{answer}"
+Answer: "{answer}"
+        
+Analyse the response and indicate the most appropriate categories from the list provided. If the answer is empty or empty (‘nan’), categorise it as ‘Irrelevant’. If the answer is meaningful but does not fit any of the suggested categories, categorise it as ‘Other’. Make sure that there are no categories similar to ‘Other’, such as ‘Don't Know’, and if there are, use them. Do not use the categories ‘Other’ and ‘Irrelevant’ with other categories. Do not use the ‘Other’ and ‘Irrelevant’ categories unnecessarily, especially if there are more appropriate categories. Justify your choices.
 
-Проанализируйте ответ и укажите наиболее подходящие категории из предоставленного списка. Если ответ бессодержательный или пустой ("nan"), отнесите его к категории "Нерелевантный ответ". Если ответ содержательный, но не соответствует ни одной предложенной категории, отнесите его к категории "Другое". Убедитесь, что среди предложенных категорий нет похожих на "Другое", например, "Не знаю", и если есть, используйте их. Не используйте категории "Другое" и "Нерелевантный ответ" вместе с другими категориями. Не используйте категории "Другое" и "Нерелевантный ответ" вовсе без необходимости, особенно если есть более подходящие категории. Обоснуйте свой выбор.
-Верните результат в формате:
+Return the result in the format:
 
-Обоснование: [краткое обоснование выбора категорий]
-Категории: [список категорий через запятую]
+Rationale: [brief rationale for your choice of categories].
+Categories: [comma separated list of categories].
 """
         return [
             {"role": "system", "content": system_message},
@@ -931,7 +926,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Проверка, есть ли существующие данные, что указывает на перезапуск
     if context.user_data:
         await update.message.reply_text(
-            "Процесс перезапущен. Все предыдущие данные очищены."
+            "Process restarted. All previous data has been cleared."
         )
 
     # Очистка любых существующих данных пользователя
@@ -1009,13 +1004,13 @@ async def file_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         df, columns = import_file_and_create_categories(file_content, update.message.document.file_name)
         context.user_data["columns"] = columns
         await update.message.reply_text(
-            "Файл успешно загружен. Теперь введите вопрос, на который отвечали участники опроса."
+            "File successfully uploaded. Now enter the question that survey participants answered."
         )
         return QUESTION
     except Exception as e:
         logger.error(f"Error importing file: {e}", exc_info=True)
         await update.message.reply_text(
-            "Произошла ошибка при загрузке файла. Пожалуйста, убедитесь, что файл в формате .xlsx или .csv и попробуйте снова."
+            "An error occurred while uploading the file. Please make sure the file is in .xlsx or .csv format and try again."
         )
         return ConversationHandler.END
 
@@ -1026,7 +1021,7 @@ async def question_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     context.user_data["survey_question"] = update.message.text
 
     await update.message.reply_text(
-        "Вопрос сохранен. Теперь введите букву столбца с ответами (например, A, B, C)."
+        "Question saved. Now enter the letter of the column with the answers (e.g., A, B, C)."
     )
     return COLUMN
 
@@ -1052,7 +1047,7 @@ async def column_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         reply_markup = InlineKeyboardMarkup(keyboard)
         selected_column_name = columns[column_index]
         await update.message.reply_text(
-            f"Вы выбрали столбец {user_input} ({selected_column_name}). У вас есть готовые категории для анализа?", reply_markup=reply_markup
+            f"You've selected column {user_input} ({selected_column_name}). Do you have predefined categories for analysis?", reply_markup=reply_markup
         )
 
         return CATEGORIES
@@ -1061,7 +1056,7 @@ async def column_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return COLUMN
     except Exception as e:
         logger.error(f"Unexpected error in column_handler: {e}", exc_info=True)
-        await update.message.reply_text("Произошла ошибка при обработке вашего ввода. Пожалуйста, попробуйте еще раз.")
+        await update.message.reply_text("An error occurred while processing your input. Please try again.")
         return COLUMN
 
 
@@ -1071,7 +1066,7 @@ async def categories_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await query.answer()
 
     if query.data == "yes":
-        await query.edit_message_text("Пожалуйста, введите категории через запятую или через новую строку (в столбик)")
+        await query.edit_message_text("Please enter categories separated by commas or on new lines (in a column)")
         return CATEGORIES
     else:
         context.user_data["categories"] = []
@@ -1092,7 +1087,7 @@ async def edit_categories_handler(
         )
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Текущие категории:\n\n{categories_text}\n\nВведите номера категорий, которые вы хотите удалить, через запятую.",
+            text=f"Current categories:\n\n{categories_text}\n\nEnter the numbers of categories you want to delete, separated by commas.",
         )
         return DELETE_CATEGORIES
     elif query.data == "add_category":
@@ -1103,7 +1098,7 @@ async def edit_categories_handler(
         )
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Текущие категории:\n\n{categories_text}\n\nВведите названия категорий, которые вы хотите добавить, через запятую.",
+            text=f"Текущие категории:\n\n{categories_text}\n\nEnter the names of categories you want to add, separated by commas.",
         )
         return ADD_CATEGORY
     elif query.data == "rename_category":
@@ -1114,7 +1109,7 @@ async def edit_categories_handler(
         )
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Текущие категории:\n\n{categories_text}\n\nВведите номер категории, которую вы хотите переименовать, и новое название через двоеточие. Например: 3: Новое название категории",
+            text=f"Текущие категории:\n\n{categories_text}\n\nEnter the number of the category you want to rename and the new name, separated by a colon. For example: 3: New category name",
         )
         return RENAME_CATEGORY
     elif query.data == "finish_editing":
@@ -1125,7 +1120,7 @@ async def edit_categories_handler(
         )
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Текущие категории:\n\n{categories_text}\n\nНачать анализ?",
+            text=f"Текущие категории:\n\n{categories_text}\n\nStart analysis?",
             reply_markup=InlineKeyboardMarkup(
                 [
                     [
@@ -1139,7 +1134,7 @@ async def edit_categories_handler(
     else:
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="Неизвестный выбор. Пожалуйста, попробуйте еще раз.",
+            text="Unknown choice. Please try again.",
         )
         return EDIT_CATEGORIES
 
@@ -1268,15 +1263,15 @@ async def add_category_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
         if not new_unique_categories:
             await update.message.reply_text(
-                "✅ Все отправленные категории уже существуют. Текущие категории:\n\n" + "\n".join(
+                "✅ All submitted categories already exist. Current categories:\n\n" + "\n".join(
                     [f"{i+1}. {cat}" for i, cat in enumerate(current_categories)]
-                ) + "\n\nВыберите следующее действие:",
+                ) + "\n\nChoose the next action:",
                 reply_markup=InlineKeyboardMarkup(
                     [
-                        [InlineKeyboardButton("🗑️ Удалить категории", callback_data="delete_categories")],
-                        [InlineKeyboardButton("➕ Добавить категорию", callback_data="add_category")],
-                        [InlineKeyboardButton("✏️ Изменить название категории", callback_data="rename_category")],
-                        [InlineKeyboardButton("🚀 Запустить анализ", callback_data="finish_editing")],
+                        [InlineKeyboardButton("🗑️ Delete categories", callback_data="delete_categories")],
+                        [InlineKeyboardButton("➕ Add category", callback_data="add_category")],
+                        [InlineKeyboardButton("✏️ Rename category", callback_data="rename_category")],
+                        [InlineKeyboardButton("🚀 Start analysis", callback_data="finish_editing")],
                     ]
                 ),
             )
@@ -1288,23 +1283,23 @@ async def add_category_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         )
 
         await update.message.reply_text(
-            f"✅ Добавлены категории:\n" + "\n".join([f"- {cat}" for cat in new_unique_categories]) +
-            f"\n\nТекущие категории:\n\n{categories_text}\n\nВыберите следующее действие:",
+            f"✅ Added categories:\n" + "\n".join([f"- {cat}" for cat in new_unique_categories]) +
+            f"\n\nCurrent categories:\n\n{categories_text}\n\nChoose what to do next:",
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [InlineKeyboardButton("🗑️ Удалить категории", callback_data="delete_categories")],
-                    [InlineKeyboardButton("➕ Добавить категорию", callback_data="add_category")],
-                    [InlineKeyboardButton("✏️ Изменить название категории", callback_data="rename_category")],
-                    [InlineKeyboardButton("🚀 Запустить анализ", callback_data="finish_editing")],
+                    [InlineKeyboardButton("🗑️ Delete categories", callback_data="delete_categories")],
+                    [InlineKeyboardButton("➕ Add category", callback_data="add_category")],
+                    [InlineKeyboardButton("✏️ Rename category", callback_data="rename_category")],
+                    [InlineKeyboardButton("🚀 Start analysis", callback_data="finish_editing")],
                 ]
             ),
         )
         return EDIT_CATEGORIES
 
     except Exception as e:
-        logger.error(f"Ошибка в add_category_handler: {e}", exc_info=True)
+        logger.error(f"The error occured in add_category_handler: {e}", exc_info=True)
         await update.message.reply_text(
-            "❌ Произошла ошибка при добавлении категорий. Пожалуйста, попробуйте еще раз."
+            "❌ An error occurred while adding categories. Please try again."
         )
         return EDIT_CATEGORIES
 
@@ -1315,14 +1310,14 @@ async def add_category_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         )
 
         await update.message.reply_text(
-            f"✅ Добавлены категории:\n" + "\n".join([f"- {cat}" for cat in new_unique_categories]) +
-            f"\n\nТекущие категории:\n\n{categories_text}\n\nВыберите следующее действие:",
+            f"✅ Added categories:\n" + "\n".join([f"- {cat}" for cat in new_unique_categories]) +
+            f"\n\nCurrent categories:\n\n{categories_text}\n\nChoose what to do next:",
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [InlineKeyboardButton("🗑️ Удалить категории", callback_data="delete_categories")],
-                    [InlineKeyboardButton("➕ Добавить категорию", callback_data="add_category")],
-                    [InlineKeyboardButton("✏️ Изменить название категории", callback_data="rename_category")],
-                    [InlineKeyboardButton("🚀 Запустить анализ", callback_data="finish_editing")],
+                    [InlineKeyboardButton("🗑️ Delete categories", callback_data="delete_categories")],
+                    [InlineKeyboardButton("➕ Add category", callback_data="add_category")],
+                    [InlineKeyboardButton("✏️ Rename category", callback_data="rename_category")],
+                    [InlineKeyboardButton("🚀 Start analysis", callback_data="finish_editing")],
                 ]
             ),
         )
@@ -1331,7 +1326,7 @@ async def add_category_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     except Exception as e:
         logger.error(f"Ошибка в add_category_handler: {e}", exc_info=True)
         await update.message.reply_text(
-            "❌ Произошла ошибка при добавлении категорий. Пожалуйста, попробуйте еще раз."
+            "❌ An error occurred while adding categories. Please try again."
         )
         return EDIT_CATEGORIES
 
@@ -1345,7 +1340,7 @@ async def rename_category_handler(
         user_input = update.message.text.strip()
         if ":" not in user_input:
             await update.message.reply_text(
-                "Пожалуйста, введите данные в формате 'номер: новое название'. Например: 3: Новое название категории"
+                "Please enter the details in the format ‘number: new name’. For example: *3: New category name*"
             )
             return RENAME_CATEGORY
 
@@ -1356,7 +1351,7 @@ async def rename_category_handler(
         categories = context.user_data.get("categories", context.user_data.get("suggested_categories", []))
         if index < 1 or index > len(categories):
             await update.message.reply_text(
-                "Некорректный номер категории. Пожалуйста, попробуйте еще раз."
+                "Incorrect category number. Please try again."
             )
             return RENAME_CATEGORY
 
@@ -1368,13 +1363,13 @@ async def rename_category_handler(
         )
 
         await update.message.reply_text(
-            f"Категория переименована. Текущие категории:\n\n{categories_text}\n\nВыберите следующее действие:",
+            f"Category renamed. Current categories:\n\n{categories_text}\n\nChoose what to do next:",
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [InlineKeyboardButton("🗑️ Удалить категории", callback_data="delete_categories")],
-                    [InlineKeyboardButton("➕ Добавить категорию", callback_data="add_category")],
-                    [InlineKeyboardButton("✏️ Изменить название категории", callback_data="rename_category")],
-                    [InlineKeyboardButton("🚀 Запустить анализ", callback_data="finish_editing")],
+                    [InlineKeyboardButton("🗑️ Delete categories", callback_data="delete_categories")],
+                    [InlineKeyboardButton("➕ Add category", callback_data="add_category")],
+                    [InlineKeyboardButton("✏️ Rename category", callback_data="rename_category")],
+                    [InlineKeyboardButton("🚀 Start analysis", callback_data="finish_editing")],
                 ]
             ),
         )
@@ -1382,7 +1377,7 @@ async def rename_category_handler(
     except Exception as e:
         logger.error(f"Ошибка в rename_category_handler: {e}")
         await update.message.reply_text(
-            "Произошла ошибка при переименовании категории. Пожалуйста, попробуйте еще раз."
+            "❌ An error occurred when renaming a category. Please try again."
         )
         return RENAME_CATEGORY
 
@@ -1399,7 +1394,7 @@ async def manual_categories_handler(
         
         if not message_text:
             await update.message.reply_text(
-                "❌ Вы не отправили никаких категорий. Пожалуйста, отправьте категории через запятые или переносы строк."
+                "❌ You have not submitted any categories. Please submit categories using commas or line breaks."
             )
             return CATEGORIES  # Или EDIT_CATEGORIES в зависимости от логики
 
@@ -1409,7 +1404,7 @@ async def manual_categories_handler(
 
         if not categories:
             await update.message.reply_text(
-                "❌ Не удалось распознать категории. Пожалуйста, убедитесь, что вы правильно разделили их запятыми или переносами строк."
+                "❌ Failed to recognise the categories. Please make sure you separate them correctly with commas or line breaks."
             )
             return CATEGORIES  # Или EDIT_CATEGORIES в зависимости от логики
 
@@ -1428,15 +1423,15 @@ async def manual_categories_handler(
 
         if not new_unique_categories:
             await update.message.reply_text(
-                "✅ Все отправленные категории уже существуют. Текущие категории:\n\n" + "\n".join(
+                "✅ All submitted categories already exist. Current categories:\n\n" + "\n".join(
                     [f"{i+1}. {cat}" for i, cat in enumerate(current_categories)]
-                ) + "\n\nВыберите следующее действие:",
+                ) + "\n\nChoose what to do next:",
                 reply_markup=InlineKeyboardMarkup(
                     [
-                        [InlineKeyboardButton("🗑️ Удалить категории", callback_data="delete_categories")],
-                        [InlineKeyboardButton("➕ Добавить категорию", callback_data="add_category")],
-                        [InlineKeyboardButton("✏️ Изменить название категории", callback_data="rename_category")],
-                        [InlineKeyboardButton("🚀 Запустить анализ", callback_data="finish_editing")],
+                        [InlineKeyboardButton("🗑️ Delete categories", callback_data="delete_categories")],
+                        [InlineKeyboardButton("➕ Add category", callback_data="add_category")],
+                        [InlineKeyboardButton("✏️ Rename category", callback_data="rename_category")],
+                        [InlineKeyboardButton("🚀 Start analysis", callback_data="finish_editing")],
                     ]
                 ),
             )
@@ -1448,14 +1443,14 @@ async def manual_categories_handler(
         )
 
         await update.message.reply_text(
-            f"✅ Добавлены категории:\n" + "\n".join([f"- {cat}" for cat in new_unique_categories]) +
-            f"\n\nТекущие категории:\n\n{categories_text}\n\nВыберите следующее действие:",
+            f"✅ Categories added:\n" + "\n".join([f"- {cat}" for cat in new_unique_categories]) +
+            f"\n\nCurrent categories:\n\n{categories_text}\n\nВыберите следующее действие:",
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [InlineKeyboardButton("🗑️ Удалить категории", callback_data="delete_categories")],
-                    [InlineKeyboardButton("➕ Добавить категорию", callback_data="add_category")],
-                    [InlineKeyboardButton("✏️ Изменить название категории", callback_data="rename_category")],
-                    [InlineKeyboardButton("🚀 Запустить анализ", callback_data="finish_editing")],
+                    [InlineKeyboardButton("🗑️ Delete categories", callback_data="delete_categories")],
+                    [InlineKeyboardButton("➕ Add category", callback_data="add_category")],
+                    [InlineKeyboardButton("✏️ Rename category", callback_data="rename_category")],
+                    [InlineKeyboardButton("🚀 Start analysis", callback_data="finish_editing")],
                 ]
             ),
         )
@@ -1464,7 +1459,7 @@ async def manual_categories_handler(
     except Exception as e:
         logger.error(f"Ошибка в manual_categories_handler: {e}", exc_info=True)
         await update.message.reply_text(
-            "❌ Произошла ошибка при добавлении категорий. Пожалуйста, попробуйте еще раз."
+            "❌ An error occurred while adding categories. Please try again."
         )
         return EDIT_CATEGORIES
 
@@ -1511,10 +1506,10 @@ async def suggest_categories_handler(update: Update, context: ContextTypes.DEFAU
 
         # Подготовка клавиатуры с новыми кнопками
         keyboard = [
-            [InlineKeyboardButton("🚀 Запустить анализ", callback_data="use_categories")],
-            [InlineKeyboardButton("✏️ Редактировать", callback_data="edit")],
-            [InlineKeyboardButton("⬆️ Сгенерировать побольше (до 50 категорий)", callback_data="increase_categories")],
-            [InlineKeyboardButton("⬇️ Сгенерировать поменьше (до 10 категорий)", callback_data="decrease_categories")],
+            [InlineKeyboardButton("🚀 Start analysis", callback_data="use_categories")],
+            [InlineKeyboardButton("✏️ Edit", callback_data="edit")],
+            [InlineKeyboardButton("⬆️ Generate more (up to 50 categories)", callback_data="increase_categories")],
+            [InlineKeyboardButton("⬇️ Generate fewer (up to 10 categories)", callback_data="decrease_categories")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -1527,7 +1522,7 @@ async def suggest_categories_handler(update: Update, context: ContextTypes.DEFAU
         # Отправка сообщения с предложенными категориями и опциями
         await context.bot.send_message(
             chat_id=chat_id,
-            text=f"Предлагаемые категории:\n\n{categories_text}\n\nЧто вы хотите сделать?",
+            text=f"Suggested categories:\n\n{categories_text}\n\nWhat do you want to do?",
             reply_markup=reply_markup,
         )
 
@@ -1537,7 +1532,7 @@ async def suggest_categories_handler(update: Update, context: ContextTypes.DEFAU
         logger.error(f"Error in suggest_categories_handler: {e}", exc_info=True)
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="Произошла ошибка при генерации категорий. Пожалуйста, проверьте, что указали верный столбец (у столбца А номер 0, у B номер 1, и так далее)",
+            text="There was an error while generating categories. Please check that you have specified the correct column (column A has number 0, B has number 1, and so on).",
         )
         return ConversationHandler.END
 
@@ -1553,7 +1548,7 @@ async def process_survey_data(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     await context.bot.send_message(
         chat_id=chat_id,
-        text="Начинаю обработку опроса. Это займёт несколько минут...",
+        text="Starting survey processing. This will take a few minutes...",
     )
 
     try:
@@ -1576,10 +1571,10 @@ async def process_survey_data(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         # Проверяем наличие редких категорий
         if isinstance(rare_categories, pd.Series) and not rare_categories.empty:
-            logger.info(f"Редкие категории обнаружены: {rare_categories.to_dict()}")
+            logger.info(f"Rare categories detected: {rare_categories.to_dict()}")
             return await handle_rare_categories(update, context, rare_categories)
         elif isinstance(rare_categories, list) and rare_categories:
-            logger.info(f"Редкие категории обнаружены: {rare_categories}")
+            logger.info(f"Rare categories detected: {rare_categories}")
             return await handle_rare_categories(update, context, rare_categories)
         else:
             logger.info("Редкие категории не обнаружены")
@@ -1591,7 +1586,7 @@ async def process_survey_data(update: Update, context: ContextTypes.DEFAULT_TYPE
         logger.error(f"Ошибка при обработке опроса: {e}", exc_info=True)
         await context.bot.send_message(
             chat_id=chat_id,
-            text="Произошла ошибка при обработке опроса. Пожалуйста, попробуйте еще раз.",
+            text="An error occurred while processing the survey. Please try again.",
         )
 
     return ConversationHandler.END
@@ -1608,7 +1603,7 @@ async def handle_rare_categories(update: Update, context: ContextTypes.DEFAULT_T
             logger.error(f"Неожиданный тип редких категорий: {type(rare_categories)}")
             await context.bot.send_message(
                 chat_id=chat_id,
-                text="Произошла ошибка при обработке редких категорий. Пожалуйста, попробуйте еще раз.",
+                text="An error occurred while processing rare categories. Please try again.",
             )
             return ConversationHandler.END
         
@@ -1625,13 +1620,13 @@ async def handle_rare_categories(update: Update, context: ContextTypes.DEFAULT_T
     )
 
     message = (
-        f"Следующие категории используются реже остальных:\n\n{rare_categories_text}\n\n"
-        "Хотите ли вы удалить некоторые из этих категорий перед финальной обработкой? Это бесплатно."
+        f"The following categories are used less frequently than others:\n\n{rare_categories_text}\n\n"
+        "Would you like to remove some of these categories before final processing? This is free."
     )
 
     keyboard = [
-        [InlineKeyboardButton("🗑️ Выбрать, какие удалить", callback_data="choose_to_delete")],
-        [InlineKeyboardButton("📊 Оставить все категории", callback_data="keep_all")]
+        [InlineKeyboardButton("🗑️ Choose which to delete", callback_data="choose_to_delete")],
+        [InlineKeyboardButton("📊 Keep all categories", callback_data="keep_all")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -1648,13 +1643,13 @@ async def ask_for_categories_to_remove(update: Update, context: ContextTypes.DEF
     )
 
     message = (
-        f"Следующие категории используются реже остальных:\n\n{rare_categories_text}\n\n"
-        "Хотите ли вы удалить некоторые из этих категорий перед финальной обработкой?"
+        f"The following categories are used less frequently than others:\n\n{rare_categories_text}\n\n"
+        "Would you like to remove some of these categories before final processing?"
     )
 
     keyboard = [
-        [InlineKeyboardButton("Удалить некоторые категории", callback_data="remove_rare")],
-        [InlineKeyboardButton("Оставить все категории", callback_data="keep_all")]
+        [InlineKeyboardButton("Remove some categories", callback_data="remove_rare")],
+        [InlineKeyboardButton("Keep all categories", callback_data="keep_all")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -1697,8 +1692,8 @@ async def remove_categories_input_handler(update: Update, context: ContextTypes.
         # Обновляем код_к_категории после удаления категорий
         code_to_category = {v: k for k, v in category_to_code.items()}
         
-        await update.message.reply_text(f"Удалены категории: {', '.join(categories_to_remove)}")
-        await update.message.reply_text("Начинаю пересчет результатов без удаленных категорий. Это может занять некоторое время...")
+        await update.message.reply_text(f"Deleted categories: {', '.join(categories_to_remove)}")
+        await update.message.reply_text("Starting recalculation of results without deleted categories. This may take some time...")
 
         # Пересчитываем результаты
         df, category_to_code, code_to_category = categorize_answers(
@@ -1718,18 +1713,18 @@ async def remove_categories_input_handler(update: Update, context: ContextTypes.
         # Обновляем данные в контексте
         context.user_data['survey_data'] = (df, category_to_code, code_to_category, rare_categories)
         
-        await update.message.reply_text("Пересчет завершен. Перехожу к финальной обработке результатов.")
+        await update.message.reply_text("Recalculation completed. Moving to final processing of results.")
         
         # Сразу переходим к финальной обработке
         return await process_final_results(update, context)
     
     except ValueError as e:
-        await update.message.reply_text(f"Ошибка: {str(e)}. Пожалуйста, введите корректные номера категорий, разделенные запятыми.")
+        await update.message.reply_text(f"Error: {str(e)}. Please enter valid category numbers separated by commas.")
         logger.warning(f"User provided invalid input: {user_input}")
         return REMOVE_CATEGORIES_INPUT
 
     except Exception as e:
-        await update.message.reply_text("Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз или начните процесс заново.")
+        await update.message.reply_text("An error occurred while processing your request. Please try again or restart the process.")
         logger.error(f"Error in remove_categories_input_handler: {str(e)}")
         return ConversationHandler.END
 
@@ -1754,8 +1749,8 @@ async def prompt_for_categories_to_remove(update: Update, context: ContextTypes.
     )
 
     message = (
-        f"Выберите номера категорий для удаления (через запятую):\n\n{rare_categories_text}\n\n"
-        "Например: 1,3,5"
+        f"Select the numbers of categories to delete (separated by commas):\n\n{rare_categories_text}\n\n"
+        "For example: 1,3,5"
     )
 
     await query.edit_message_text(text=message)
@@ -1774,21 +1769,21 @@ async def category_choice_handler(update: Update, context: ContextTypes.DEFAULT_
         # Установка max_categories в 50
         context.user_data["max_categories"] = 50
         # Повторная генерация категорий
-        await query.edit_message_text("Генерирую новые категории...")
+        await query.edit_message_text("Generating new categories...")
         return await suggest_categories_handler(update, context)
     elif query.data == "decrease_categories":
         # Установка max_categories в 10
         context.user_data["max_categories"] = 10
         # Повторная генерация категорий
-        await query.edit_message_text("Генерирую новые категории...")
+        await query.edit_message_text("Generating new categories...")
         return await suggest_categories_handler(update, context)
     elif query.data == "edit":
         # Предлагаем новые опции редактирования
         keyboard = [
-            [InlineKeyboardButton("🗑️ Удалить категории", callback_data="delete_categories")],
-            [InlineKeyboardButton("➕ Добавить категорию", callback_data="add_category")],
-            [InlineKeyboardButton("✏️ Изменить название категории", callback_data="rename_category")],
-            [InlineKeyboardButton("🚀 Запустить анализ", callback_data="finish_editing")],
+            [InlineKeyboardButton("🗑️ Delete categories", callback_data="delete_categories")],
+            [InlineKeyboardButton("➕ Add a category", callback_data="add_category")],
+            [InlineKeyboardButton("✏️ Change category name", callback_data="rename_category")],
+            [InlineKeyboardButton("🚀 Start analysis", callback_data="finish_editing")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(
@@ -1821,14 +1816,14 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     if isinstance(update, Update) and update.effective_chat:
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте позже.",
+            text="An error occurred while processing your request. Please try again later.",
         )
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     await context.bot.send_message(
         chat_id=chat_id,
-        text=f"Всего проанализировано ответов: {total_answers}",
+        text=f"Total responses analysed: {total_answers}",
     )
     logger.info(f"User {chat_id} requested stats. Total answers: {total_answers}.")
 
@@ -1838,7 +1833,7 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     if query.invoice_payload.startswith("paid_answers_"):
         await query.answer(ok=True)
     else:
-        await query.answer(ok=False, error_message="Что-то пошло не так...")
+        await query.answer(ok=False, error_message="Something went wrong...")
 
 def update_stats(user_id: str, answers_analyzed: int, money_saved: float, time_saved: float):
     """
@@ -1864,7 +1859,7 @@ def update_stats(user_id: str, answers_analyzed: int, money_saved: float, time_s
         user_ref.child('money_saved').transaction(lambda current: (current or 0.0) + money_saved)
         user_ref.child('time_saved').transaction(lambda current: (current or 0.0) + time_saved)
         
-        logger.info(f"Обновлена статистика для пользователя {user_id}: +{answers_analyzed} ответов, +{money_saved} руб., +{time_saved} мин.")
+        logger.info(f"Обновлена статистика для пользователя {user_id}: +{answers_analyzed} ответов, +{money_saved} USD, +{time_saved} min.")
     except Exception as e:
         logger.error(f"Не удалось обновить статистику для пользователя {user_id}: {e}")
         raise e  # Повторно выбрасываем исключение для обработки в вызывающем коде
@@ -1897,26 +1892,26 @@ async def process_final_results(update: Update, context: ContextTypes.DEFAULT_TY
         if paid_answers > 0:
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"Обработано {free_answers} бесплатных ответов. Осталось {paid_answers} платных ответов."
+                text=f"{free_answers} free responses have been processed. There are {paid_answers} paid responses left."
             )
             await send_payment_request(update, context, paid_answers)
         else:
             await context.bot.send_message(
                 chat_id=chat_id,
-                text="Анализ завершен. Все ответы обработаны бесплатно."
+                text="The analysis is complete. All responses have been processed free of charge."
             )
     elif paid_answers > 0:
         await context.bot.send_message(
             chat_id=chat_id,
-            text=f"У вас закончились бесплатные ответы. Необходимо оплатить анализ {paid_answers} ответов."
+            text=f"You have run out of free answers. You need to pay for the analysis of {paid_answers} answers."
         )
         await send_payment_request(update, context, paid_answers)
 
     context.user_data['paid_answers'] = paid_answers
 
     # Расчет экономии
-    agency_cost_per_answer = 5  # рублей
-    bot_cost_per_answer = 2     # рубля
+    agency_cost_per_answer = 0.50  # рублей
+    bot_cost_per_answer = 0.13     # рубля
     agency_time_per_answer_min = 0.5  # 30 секунд
     bot_time_per_1000_answers_min = 5   # 5 минут
     bot_time_per_answer_min = bot_time_per_1000_answers_min / 1000  # 0.005 минут
@@ -1932,7 +1927,7 @@ async def process_final_results(update: Update, context: ContextTypes.DEFAULT_TY
         logger.error(f"Не удалось обновить статистику для пользователя {user_id}: {e}")
         await context.bot.send_message(
             chat_id=chat_id,
-            text="❌ Произошла ошибка при обновлении статистики. Пожалуйста, попробуйте позже."
+            text="❌ An error occurred while updating statistics. Please try again later."
         )
         return ConversationHandler.END
 
@@ -1980,33 +1975,33 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         if total_time_saved_min >= 60:
             hours = total_time_saved_min // 60
             minutes = total_time_saved_min % 60
-            total_time_saved_str = f"{int(hours)} часов {int(minutes)} минут"
+            total_time_saved_str = f"{int(hours)} hours {int(minutes)} minuts"
         else:
-            total_time_saved_str = f"{total_time_saved_min:.2f} минут"
+            total_time_saved_str = f"{total_time_saved_min:.2f} minuts"
 
-        user_money_saved_str = f"{user_money_saved:,.2f} руб."
+        user_money_saved_str = f"{user_money_saved:,.2f} USD"
         if user_time_saved_min >= 60:
             hours = user_time_saved_min // 60
             minutes = user_time_saved_min % 60
-            user_time_saved_str = f"{int(hours)} часов {int(minutes)} минут"
+            user_time_saved_str = f"{int(hours)} hours {int(minutes)} minuts"
         else:
-            user_time_saved_str = f"{user_time_saved_min:.2f} минут"
+            user_time_saved_str = f"{user_time_saved_min:.2f} minuts"
 
         # Формирование сообщения статистики
         stats_message = (
-            f"📊 *Статистика:*\n\n"
-            f"🔹 *Общая статистика:*\n"
-            f"   - Всего проанализировано ответов: *{total_answers_str}*\n"
-            f"   - Общее количество использований бота: *{total_surveys_str}*\n"
-            f"   - Всего сэкономлено денег: *{total_money_saved_str}*\n"
-            f"   - Всего сэкономлено времени: *{total_time_saved_str}*\n\n"
-            f"🔸 *Ваша статистика:*\n"
-            f"   - Вы проанализировали ответов: *{user_answers}*\n"
-            f"   - Вы сэкономили денег: *{user_money_saved_str}*\n"
-            f"   - Вы сэкономили времени: *{user_time_saved_str}*\n\n"
-            f"💡 *Как это посчитано:*\n"
-            f"   - *Экономия денег:* (5 руб. - 2 руб.) × количество ответов.\n"
-            f"   - *Экономия времени:* (0.5 мин. - 0.005 мин.) × количество ответов.\n"
+            f"📊 *Statistics:*\n\n"
+            f"🔹 *Overall stats:*\n"
+            f"   - Total responses analysed: *{total_answers_str}*\n"
+            f"   - Total number of times the bot has been used: *{total_surveys_str}*\n"
+            f"   - Total money saved: *{total_money_saved_str}*\n"
+            f"   - Total time saved: *{total_time_saved_str}*\n\n"
+            f"🔸 *Your stats:*\n"
+            f"   - You have analysed responses: *{user_answers}*\n"
+            f"   - You saved money: *{user_money_saved_str}*\n"
+            f"   - You saved time: *{user_time_saved_str}*\n\n"
+            f"💡 *How it's calculated:*\n"
+            f"   - *Saving money:* (0.5 USD. - 0.13 USD.) × number of responses.\n"
+            f"   - *Time Saving:* (0.5 min. - 0.005 min.) × number of responses.\n"
         )
 
         await context.bot.send_message(
@@ -2019,7 +2014,7 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         logger.error(f"Не удалось получить статистику из Firebase: {e}")
         await context.bot.send_message(
             chat_id=chat_id,
-            text="❌ Произошла ошибка при получении статистики. Пожалуйста, попробуйте позже."
+            text="❌ An error occurred while retrieving statistics. Please try again later."
         )
 
 
