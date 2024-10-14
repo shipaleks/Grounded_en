@@ -930,19 +930,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Логирование события запуска
     logger.info(f"Пользователь {update.effective_user.id} запустил бота. Общее количество проанализированных ответов: {total_answers}")
 
-    # Расчет экономии
-    agency_cost_per_answer = 5  # рублей
-    agency_time_per_answer_min = 0.5  # 30 секунд
-    bot_cost_per_answer = 2  # рубля
-    bot_time_per_1000_answers_min = 5  # минут
-    bot_time_per_answer_min = bot_time_per_1000_answers_min / 1000  # 0.005 минут
-
-    # Общий расчет экономии
+    # Calculation of savings
+    agency_cost_per_answer = 0.50  # USD
+    bot_cost_per_answer = 0.13     # USD
+    agency_time_per_answer_min = 0.5  # minutes (30 seconds)
+    bot_time_per_1000_answers_min = 5   # minutes
+    bot_time_per_answer_min = bot_time_per_1000_answers_min / 1000  # 0.005 minutes
+    
+    # Total savings calculation
     total_money_saved = (agency_cost_per_answer - bot_cost_per_answer) * total_answers
     total_time_saved_min = (agency_time_per_answer_min - bot_time_per_answer_min) * total_answers
-
-    # Форматирование экономии для удобочитаемости
-    total_money_saved_str = f"{total_money_saved:,.2f} $"
+    
+    # Formatting savings for readability
+    total_money_saved_str = f"${total_money_saved:,.2f}"
     if total_time_saved_min >= 60:
         hours = total_time_saved_min // 60
         minutes = total_time_saved_min % 60
@@ -1818,32 +1818,33 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
 def update_stats(user_id: str, answers_analyzed: int, money_saved: float, time_saved: float):
     """
-    Обновляет глобальную и пользовательскую статистику.
+    Updates global and user statistics.
 
     Args:
-        user_id (str): ID пользователя Telegram.
-        answers_analyzed (int): Количество проанализированных ответов.
-        money_saved (float): Сэкономленные деньги (в рублях).
-        time_saved (float): Сэкономленное время (в минутах).
+        user_id (str): Telegram user ID.
+        answers_analyzed (int): Number of answers analyzed.
+        money_saved (float): Money saved (in USD).
+        time_saved (float): Time saved (in minutes).
     """
     try:
-        # Обновление глобальной статистики
+        # Update global statistics
         stats_ref = ref.child('stats')
         stats_ref.child('total_answers').transaction(lambda current: (current or 0) + answers_analyzed)
         stats_ref.child('total_surveys').transaction(lambda current: (current or 0) + 1)
         stats_ref.child('total_money_saved').transaction(lambda current: (current or 0.0) + money_saved)
         stats_ref.child('total_time_saved').transaction(lambda current: (current or 0.0) + time_saved)
         
-        # Обновление пользовательской статистики
+        # Update user statistics
         user_ref = ref.child('users').child(str(user_id))
         user_ref.child('answers_analyzed').transaction(lambda current: (current or 0) + answers_analyzed)
         user_ref.child('money_saved').transaction(lambda current: (current or 0.0) + money_saved)
         user_ref.child('time_saved').transaction(lambda current: (current or 0.0) + time_saved)
         
-        logger.info(f"Обновлена статистика для пользователя {user_id}: +{answers_analyzed} ответов, +{money_saved} USD, +{time_saved} min.")
+        logger.info(f"Updated statistics for user {user_id}: +{answers_analyzed} answers, +{money_saved} USD, +{time_saved} min.")
     except Exception as e:
-        logger.error(f"Не удалось обновить статистику для пользователя {user_id}: {e}")
-        raise e  # Повторно выбрасываем исключение для обработки в вызывающем коде
+        logger.error(f"Failed to update statistics for user {user_id}: {e}")
+        raise e  # Re-raise the exception for handling in the calling code
+
 
 
 
@@ -1890,27 +1891,28 @@ async def process_final_results(update: Update, context: ContextTypes.DEFAULT_TY
 
     context.user_data['paid_answers'] = paid_answers
 
-    # Расчет экономии
-    agency_cost_per_answer = 0.50  # рублей
-    bot_cost_per_answer = 0.13     # рубля
-    agency_time_per_answer_min = 0.5  # 30 секунд
-    bot_time_per_1000_answers_min = 5   # 5 минут
-    bot_time_per_answer_min = bot_time_per_1000_answers_min / 1000  # 0.005 минут
-
+    # Calculation of savings
+    agency_cost_per_answer = 0.50  # USD
+    bot_cost_per_answer = 0.13     # USD
+    agency_time_per_answer_min = 0.5  # minutes (30 seconds)
+    bot_time_per_1000_answers_min = 5   # minutes
+    bot_time_per_answer_min = bot_time_per_1000_answers_min / 1000  # 0.005 minutes
+    
     money_saved = (agency_cost_per_answer - bot_cost_per_answer) * total_answers
     time_saved_min = (agency_time_per_answer_min - bot_time_per_answer_min) * total_answers
-
-    # Обновление статистики
+    
+    # Updating statistics
     try:
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, update_stats, user_id, total_answers, money_saved, time_saved_min)
     except Exception as e:
-        logger.error(f"Не удалось обновить статистику для пользователя {user_id}: {e}")
+        logger.error(f"Failed to update statistics for user {user_id}: {e}")
         await context.bot.send_message(
             chat_id=chat_id,
             text="❌ An error occurred while updating statistics. Please try again later."
         )
         return ConversationHandler.END
+
 
     await context.bot.send_message(
         chat_id=chat_id,
@@ -1952,11 +1954,11 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         # Форматирование чисел
         total_answers_str = f"{total_answers:,}".replace(",", " ")
         total_surveys_str = f"{total_surveys:,}".replace(",", " ")
-        total_money_saved_str = f"{total_money_saved:,.2f} руб."
+        total_money_saved_str = f"{total_money_saved:,.2f} $"
         if total_time_saved_min >= 60:
             hours = total_time_saved_min // 60
             minutes = total_time_saved_min % 60
-            total_time_saved_str = f"{int(hours)} hours {int(minutes)} minuts"
+            total_time_saved_str = f"{int(hours)} hours {int(minutes)} minutes"
         else:
             total_time_saved_str = f"{total_time_saved_min:.2f} minutes"
 
@@ -1966,7 +1968,7 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             minutes = user_time_saved_min % 60
             user_time_saved_str = f"{int(hours)} hours {int(minutes)} minutes"
         else:
-            user_time_saved_str = f"{user_time_saved_min:.2f} minuts"
+            user_time_saved_str = f"{user_time_saved_min:.2f} minutes"
 
         # Формирование сообщения статистики
         stats_message = (
