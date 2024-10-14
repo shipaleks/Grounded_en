@@ -111,7 +111,7 @@ def import_file_and_create_categories(file_content, file_name):
         df = pd.read_csv(io.BytesIO(file_content), encoding="utf-8", header=header_rows)
     else:
         raise ValueError(
-            "Неподдерживаемый формат файла. Пожалуйста, загрузите файл в формате xlsx или csv."
+            "Unsupported file format. Please upload a file in .xlsx or .csv format."
         )
 
     # Возвращаем DataFrame и список имен столбцов
@@ -362,7 +362,7 @@ Categories: {categories_list}
 
 Answer: "{answer}"
 
-Analyse the response and indicate the most appropriate categories from the list provided. If the answer is empty or empty (‘nan’), categorise it as ‘Irrelevant’. If the answer is meaningful but does not fit any of the suggested categories, categorise it as ‘Other’. Make sure that there are no categories similar to ‘Other’, such as ‘Don't Know’, and if there are, use them. Do not use the categories ‘Other’ and ‘Irrelevant’ with other categories. Do not use the ‘Other’ and ‘Irrelevant’ categories unnecessarily, especially if there are more appropriate categories. Justify your choices.
+Analyse the response and indicate the most appropriate categories from the list provided. If the answer is empty or empty ('nan'), categorise it as 'Irrelevant'. If the answer is meaningful but does not fit any of the suggested categories, categorise it as 'Other'. Make sure that there are no categories similar to 'Other', such as 'Don't Know', and if there are, use them. Do not use the categories 'Other' and 'Irrelevant' with other categories. Do not use the 'Other' and 'Irrelevant' categories unnecessarily, especially if there are more appropriate categories. Justify your choices.
 
 Return the result in the format:
 
@@ -380,7 +380,7 @@ Categories: [comma separated list of categories].
         
         # Check for empty or nonsensical answers
         if pd.isna(answer) or not str(answer).strip() or str(answer).lower() in ['nan', 'none', 'null']:
-            return idx, "Нерелевантный ответ", "Ответ пустой или бессмысленный.", str(category_to_code["Нерелевантный ответ"])
+            return idx, "Irrelevant", "The answer is empty or meaningless.", str(category_to_code["Irrelevant"])
         
         messages = create_messages(answer, categories)
 
@@ -460,7 +460,7 @@ def test_categorizations(
 ):
     def create_messages(answer, categories):
         categories_list = ", ".join(categories)
-        system_message = "Вы опытный аналитик в области Market Research."
+        system_message = "You are an experienced analyst in Market Research."
         user_message = f"""
 Your task: based on the given open-ended answer, determine which categories it belongs to.
 
@@ -468,7 +468,7 @@ Categories: {categories_list}
 
 Answer: "{answer}"
         
-Analyse the response and indicate the most appropriate categories from the list provided. If the answer is empty or empty (‘nan’), categorise it as ‘Irrelevant’. If the answer is meaningful but does not fit any of the suggested categories, categorise it as ‘Other’. Make sure that there are no categories similar to ‘Other’, such as ‘Don't Know’, and if there are, use them. Do not use the categories ‘Other’ and ‘Irrelevant’ with other categories. Do not use the ‘Other’ and ‘Irrelevant’ categories unnecessarily, especially if there are more appropriate categories. Justify your choices.
+Analyse the response and indicate the most appropriate categories from the list provided. If the answer is empty or empty ('nan'), categorise it as 'Irrelevant'. If the answer is meaningful but does not fit any of the suggested categories, categorise it as 'Other'. Make sure that there are no categories similar to 'Other', such as 'Don't Know', and if there are, use them. Do not use the categories 'Other' and 'Irrelevant' with other categories. Do not use the 'Other' and 'Irrelevant' categories unnecessarily, especially if there are more appropriate categories. Justify your choices.
 
 Return the result in the format:
 
@@ -532,12 +532,12 @@ Categories: [comma separated list of categories].
                         if cat.strip()
                     ]
                     assigned_categories = [
-                        cat if cat in categories else "Другое"
+                        cat if cat in categories else "Other"
                         for cat in assigned_categories
                     ]
                     all_categories_str = ", ".join(assigned_categories)
                     codes = [
-                        str(category_to_code.get(cat, category_to_code["Другое"]))
+                        str(category_to_code.get(cat, category_to_code["Other"]))
                         for cat in assigned_categories
                     ]
                     codes_str = ", ".join(codes)
@@ -603,13 +603,13 @@ def analyze_category_usage(df, categories, rare_threshold=0.3, max_rare_categori
 
 
 def create_category_columns(df, categories, category_to_code):
-    # Ensure "Другое" and "Нерелевантный ответ" are in the categories
-    if "Другое" not in categories:
-        categories.append("Другое")
-        category_to_code["Другое"] = max(category_to_code.values()) + 1
-    if "Нерелевантный ответ" not in categories:
-        categories.append("Нерелевантный ответ")
-        category_to_code["Нерелевантный ответ"] = max(category_to_code.values()) + 1
+    # Ensure "Other" and "Irrelevant" are in the categories
+    if "Other" not in categories:
+        categories.append("Other")
+        category_to_code["Other"] = max(category_to_code.values()) + 1
+    if "Irrelevant" not in categories:
+        categories.append("Irrelevant")
+        category_to_code["Irrelevant"] = max(category_to_code.values()) + 1
 
     for category, code in category_to_code.items():
         column_name = f"{code}. {category}"
@@ -730,14 +730,14 @@ def column_letter_to_index(letter: str) -> int:
     """
     letter = letter.strip().upper()
     if not letter.isalpha():
-        raise ValueError("Неверный формат столбца. Пожалуйста, введите букву столбца (например, A, B, C).")
+        raise ValueError("Invalid column format. Please enter a column letter (e.g., A, B, C).")
     
     index = 0
     for char in letter:
         if 'A' <= char <= 'Z':
             index = index * 26 + (ord(char) - ord('A') + 1)
         else:
-            raise ValueError("Неверный формат столбца. Пожалуйста, используйте только буквы A-Z.")
+            raise ValueError("Incorrect column format. Please use only letters A-Z.")
     return index - 1  # Zero-based index
 
 
@@ -815,14 +815,14 @@ def check_free_answers_limit(user_id):
 
 async def send_payment_request(update: Update, context: ContextTypes.DEFAULT_TYPE, paid_answers):
     chat_id = update.effective_chat.id
-    title = "Оплата за анализ дополнительных ответов"
-    description = f"Анализ {paid_answers} дополнительных ответов"
+    title = "Fee for analysing additional responses"
+    description = f"Analysis of {paid_answers} additional responses"
     payload = f"paid_answers_{paid_answers}"
     currency = "XTR"
     # Assuming 1 XTR per answer; adjust according to your pricing
-    amount_per_answer = 1  # Adjust this value based on your pricing strategy
+    amount_per_answer = 5  # Adjust this value based on your pricing strategy
     price = paid_answers * amount_per_answer
-    prices = [LabeledPrice("Анализ ответов", int(price))]
+    prices = [LabeledPrice("Analysis of the responses", int(price))]
 
     # For payments in Telegram Stars, provider_token should be an empty string
     provider_token = ""
@@ -846,10 +846,10 @@ async def send_payment_request(update: Update, context: ContextTypes.DEFAULT_TYP
             # reply_markup=your_custom_inline_keyboard,
         )
     except Exception as e:
-        logger.error(f"Ошибка при отправке запроса на оплату: {e}")
+        logger.error(f"Error when sending a payment request: {e}")
         await context.bot.send_message(
             chat_id=chat_id,
-            text="Произошла ошибка при формировании запроса на оплату. Пожалуйста, попробуйте позже."
+            text="An error occurred while creating a payment request. Please try again later."
         )
 
 async def send_results(update: Update, context: ContextTypes.DEFAULT_TYPE, xlsx_content, png_content):
@@ -860,19 +860,19 @@ async def send_results(update: Update, context: ContextTypes.DEFAULT_TYPE, xlsx_
         chat_id=chat_id,
         document=io.BytesIO(xlsx_content),
         filename="results.xlsx",
-        caption="Результаты анализа (Excel файл)"
+        caption="Analysis results (Excel file)"
     )
     
     # Отправка изображения с графиком
     await context.bot.send_photo(
         chat_id=chat_id,
         photo=io.BytesIO(png_content),
-        caption="Распределение категорий"
+        caption="Category distribution"
     )
     
     await context.bot.send_message(
         chat_id=chat_id,
-        text="Анализ завершен. Результаты отправлены."
+        text="Analysis completed. Results have been sent."
     )
 
 async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -884,7 +884,8 @@ async def successful_payment_callback(update: Update, context: ContextTypes.DEFA
     xlsx_content, png_content = save_results(df, code_to_category)
     await send_results(update, context, xlsx_content, png_content)
 
-    await update.message.reply_text(f"Спасибо за оплату! Анализ {paid_answers} ответов выполнен.")
+    await update.message.reply_text(f"Thank you for your payment! Analysis of {paid_answers} responses has been completed.")
+
 
 
 async def pre_checkout_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -939,13 +940,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     total_time_saved_min = (agency_time_per_answer_min - bot_time_per_answer_min) * total_answers
 
     # Форматирование экономии для удобочитаемости
-    total_money_saved_str = f"{total_money_saved:,.2f} ₽"
+    total_money_saved_str = f"{total_money_saved:,.2f} $"
     if total_time_saved_min >= 60:
         hours = total_time_saved_min // 60
         minutes = total_time_saved_min % 60
-        total_time_saved_str = f"{int(hours)} часов {int(minutes)} минут"
+        total_time_saved_str = f"{int(hours)} hours {int(minutes)} minutes"
     else:
-        total_time_saved_str = f"{total_time_saved_min:.2f} минут"
+        total_time_saved_str = f"{total_time_saved_min:.2f} minutes"
 
     # Формирование нового приветственного сообщения
     greeting_message = (
@@ -1078,7 +1079,7 @@ async def edit_categories_handler(
         )
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Текущие категории:\n\n{categories_text}\n\nEnter the names of categories you want to add, separated by commas.",
+            text=f"Current categories:\n\n{categories_text}\n\nEnter the names of categories you want to add, separated by commas.",
         )
         return ADD_CATEGORY
     elif query.data == "rename_category":
@@ -1123,31 +1124,29 @@ async def edit_categories_handler(
 
 async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     payment_info = (
-    "⭐️ *Что такое Telegram Stars?*\n\n"
-    "Telegram Stars - это виртуальная валюта внутри Telegram для оплаты цифровых услуг, "
-    "включая функции нашего бота.\n\n"
-    "🤔 *Почему мы используем Telegram Stars?*\n\n"
-    "Недавно правила App Store и Google Play изменились, запретив приложениям принимать "
-    "прямые платежи за цифровые услуги. Использование Stars - это способ продолжить "
-    "предоставлять вам наши услуги в соответствии с новыми правилами.\n\n"
-    "🧾 *Как купить Telegram Stars?*\n\n"
-    "1. Через приложение Telegram (немного дороже):\n"
-    "   - iOS: Настройки → Мои звезды → Купить больше звезд\n"
-    "   - Android: Настройки → Мои звезды\n"
-    "2. Через бота [@PremiumBot](https://t.me/PremiumBot) (обычно выгоднее)\n\n"
-    "💰 *Как сэкономить при покупке Stars?*\n\n"
-    "Рекомендуем покупать Stars через [@PremiumBot](https://t.me/PremiumBot) - это заметно выгоднее. "
-    "Например, 250 звёзд там стоят 465,99 ₽, а через App Store - 599 ₽.\n\n"
-    "Также, покупка большего количества Stars за раз обычно даёт лучшую цену за единицу. "
-    "Если вы планируете регулярно пользоваться ботом, возможно, стоит рассмотреть покупку "
-    "большего пакета Stars."
+    "⭐️ *What are Telegram Stars?*\n\n"
+    "Telegram Stars are a virtual currency within Telegram used to pay for digital services, "
+    "including the features of our bot.\n\n"
+    "🤔 *Why are we using Telegram Stars?*\n\n"
+    "Recently, App Store and Google Play policies have changed, prohibiting apps from accepting "
+    "direct payments for digital services. Using Stars is a way to continue providing our services "
+    "in compliance with the new rules.\n\n"
+    "🧾 *How to buy Telegram Stars?*\n\n"
+    "1. Through the Telegram app (slightly more expensive):\n"
+    "   - iOS: Settings → My Stars → Buy more stars\n"
+    "   - Android: Settings → My Stars\n"
+    "2. Via the bot [@PremiumBot](https://t.me/PremiumBot) (usually more advantageous)\n\n"
+    "💰 *How to save when buying Stars?*\n\n"
+    "We recommend buying Stars through [@PremiumBot](https://t.me/PremiumBot) — it's noticeably cheaper. "
+    "Also, buying a larger number of Stars at once usually gives a better price per unit. "
+    "If you plan to use the bot regularly, you might consider purchasing a larger Stars package."
 )
     
     await update.message.reply_text(payment_info, parse_mode='Markdown', disable_web_page_preview=True)
 
 async def help_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     help_message = (
-        "Если у вас возникли вопросы или нужна помощь, пожалуйста, свяжитесь с создателем бота: [@bdndjcmf](https://t.me/bdndjcmf)"
+        "If you have any questions or need assistance, please contact the bot creator: [@bdndjcmf](https://t.me/bdndjcmf)"
     )
     await update.message.reply_text(help_message, parse_mode='Markdown', disable_web_page_preview=True)
 
@@ -1913,7 +1912,7 @@ async def process_final_results(update: Update, context: ContextTypes.DEFAULT_TY
 
     await context.bot.send_message(
         chat_id=chat_id,
-        text="Спасибо за использование бота!"
+        text="Thank you for using the bot!"
     )
     return ConversationHandler.END
 
@@ -1957,13 +1956,13 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             minutes = total_time_saved_min % 60
             total_time_saved_str = f"{int(hours)} hours {int(minutes)} minuts"
         else:
-            total_time_saved_str = f"{total_time_saved_min:.2f} minuts"
+            total_time_saved_str = f"{total_time_saved_min:.2f} minutes"
 
         user_money_saved_str = f"{user_money_saved:,.2f} USD"
         if user_time_saved_min >= 60:
             hours = user_time_saved_min // 60
             minutes = user_time_saved_min % 60
-            user_time_saved_str = f"{int(hours)} hours {int(minutes)} minuts"
+            user_time_saved_str = f"{int(hours)} hours {int(minutes)} minutes"
         else:
             user_time_saved_str = f"{user_time_saved_min:.2f} minuts"
 
