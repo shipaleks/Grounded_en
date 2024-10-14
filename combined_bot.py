@@ -303,7 +303,7 @@ Return only a list of categories separated by commas.
         # Всегда добавляем "Другое" и "Нерелевантный ответ", если их нет
         if "Other" not in suggested_categories and "Irrelevant" not in existing_categories:
             suggested_categories.append("Other")
-        if "Нерелевантный ответ" not in suggested_categories and "Irrelevant" not in existing_categories:
+        if "Irrelevant" not in suggested_categories and "Irrelevant" not in existing_categories:
             suggested_categories.append("Irrelevant")
 
         return suggested_categories
@@ -338,16 +338,16 @@ def create_categories(
 import time
 
 def categorize_answers(df, open_answer_column, categories):
-    df["Все категории"] = ""
-    df["Обоснование"] = ""
-    df["Коды"] = ""
-    df["Оценка"] = 0
+    df["All Categories"] = ""
+    df["Rationale"] = ""
+    df["Codes"] = ""
+    df["Score"] = 0
 
     # Ensure "Другое" and "Нерелевантный ответ" are in the categories
-    if "Другое" not in categories:
-        categories.append("Другое")
-    if "Нерелевантный ответ" not in categories:
-        categories.append("Нерелевантный ответ")
+    if "Other" not in categories:
+        categories.append("Other")
+    if "Irrelevant" not in categories:
+        categories.append("Irrelevant")
 
     category_to_code = {category: idx + 1 for idx, category in enumerate(categories)}
     code_to_category = {idx: category for category, idx in category_to_code.items()}
@@ -399,32 +399,33 @@ Categories: [comma separated list of categories].
             reasoning = ""
             lines = result.split("\n")
             for line in lines:
-                if line.startswith("Обоснование:"):
-                    reasoning = line.replace("Обоснование:", "").strip()
-                elif line.startswith("Категории:"):
-                    categories_str = line.replace("Категории:", "").strip()
+                if line.startswith("Rationale:"):
+                    reasoning = line.replace("Rationale:", "").strip()
+                elif line.startswith("Categories:"):
+                    categories_str = line.replace("Categories:", "").strip()
+
 
             # Extract categories from the "Категории" field
             assigned_categories = set()
             for cat in categories_str.split(","):
                 cat = cat.strip()
-                if cat in categories and cat not in ["Другое", "Нерелевантный ответ"]:
+                if cat in categories and cat not in ["Other", "Irrelevant"]:
                     assigned_categories.add(cat)
             
             # If no categories were assigned, check the reasoning for negations
             if not assigned_categories:
-                negation_words = ["не", "нет", "не соответствует", "не подходит", "не относится"]
+                negation_words = ["not", "no", "does not match", "does not fit", "does not relate"]
                 for category in categories:
-                    if category in ["Другое", "Нерелевантный ответ"]:
+                    if category in ["Other", "Irrelevant"]:
                         continue
                     category_mentioned = category.lower() in reasoning.lower()
                     negated = any(neg in reasoning.lower().split() for neg in negation_words)
                     if category_mentioned and not negated:
                         assigned_categories.add(category)
             
-            # If still no categories, use "Другое"
+            # If still no categories, use "Other"
             if not assigned_categories:
-                assigned_categories = {"Другое"}
+                assigned_categories = {"Other"}
 
             all_categories_str = ", ".join(sorted(assigned_categories))
             codes = [str(category_to_code[cat]) for cat in assigned_categories]
@@ -448,8 +449,8 @@ Categories: [comma separated list of categories].
             desc="Категоризация ответов",
         ):
             idx, categories_result, reasoning_result, codes_result = future.result()
-            df.at[idx, "Все категории"] = categories_result
-            df.at[idx, "Обоснование"] = reasoning_result
+            df.at[idx, "All categories"] = categories_result
+            df.at[idx, "Rationale"] = reasoning_result
             df.at[idx, "Коды"] = codes_result
 
     return df, category_to_code, code_to_category
@@ -482,9 +483,9 @@ Categories: [comma separated list of categories].
 
     for iteration in range(max_iterations):
         def evaluate_row(row):
-            if "Ошибка" in row["Все категории"] or "Ошибка" in row["Обоснование"]:
+            if "Ошибка" in row["All categories"] or "Ошибка" in row["Rationale"]:
                 return 0
-            elif row["Все категории"] == "" or row["Обоснование"] == "":
+            elif row["All categories"] == "" or row["Rationale"] == "":
                 return 1
             else:
                 return 2
@@ -521,10 +522,10 @@ Categories: [comma separated list of categories].
                     reasoning = ""
                     lines = result.split("\n")
                     for line in lines:
-                        if line.startswith("Обоснование:"):
-                            reasoning = line.replace("Обоснование:", "").strip()
-                        elif line.startswith("Категории:"):
-                            categories_str = line.replace("Категории:", "").strip()
+                        if line.startswith("Rationale:"):
+                            reasoning = line.replace("Rationale:", "").strip()
+                        elif line.startswith("Categories:"):
+                            categories_str = line.replace("Categories:", "").strip()
 
                     assigned_categories = [
                         cat.strip()
@@ -559,8 +560,8 @@ Categories: [comma separated list of categories].
                     desc=f"Повторная категоризация, итерация {iteration+1}",
                 ):
                     idx, categories_result, reasoning_result, codes_result = future.result()
-                    df.at[idx, "Все категории"] = categories_result
-                    df.at[idx, "Обоснование"] = reasoning_result
+                    df.at[idx, "All categories"] = categories_result
+                    df.at[idx, "Rationale"] = reasoning_result
                     df.at[idx, "Коды"] = codes_result
 
     return df
@@ -568,7 +569,7 @@ Categories: [comma separated list of categories].
 
 def analyze_category_usage(df, categories, rare_threshold=0.3, max_rare_categories=6):
     all_categories = (
-        df["Все категории"]
+        df["All categories"]
         .dropna()
         .apply(lambda x: [cat.strip() for cat in x.split(",")])
     )
@@ -635,7 +636,7 @@ def save_results(df, code_to_category):
     logger.info("Separate category columns added to the DataFrame.")
 
     # Расчет частоты каждой категории
-    all_categories = df["Все категории"].dropna().apply(lambda x: [cat.strip() for cat in x.split(",")])
+    all_categories = df["All categories"].dropna().apply(lambda x: [cat.strip() for cat in x.split(",")])
     all_categories = all_categories.explode()
     category_counts = all_categories.value_counts()
 
@@ -687,9 +688,9 @@ def save_results(df, code_to_category):
 
     ax = sns.barplot(x=category_counts.values, y=category_counts.index, color='#F8604A')
 
-    ax.set_title("Распределение категорий", color='black', fontsize=16, fontweight='bold')
-    ax.set_xlabel("Количество", color='black', fontsize=12)
-    ax.set_ylabel("Категории", color='black', fontsize=12)
+    ax.set_title("Category Distribution", color='black', fontsize=16, fontweight='bold')
+    ax.set_xlabel("Count", color='black', fontsize=12)
+    ax.set_ylabel("Categories", color='black', fontsize=12)
 
     ax.tick_params(colors='black', labelsize=10)
 
@@ -955,8 +956,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         f"- Automatically analyze open-ended responses from your surveys using AI\n"
         f"- Categorize responses for easy processing and analysis\n\n"
         f"⚡ *Why I'm better than traditional methods:*\n"
-        f"• - Speed: I process 1000 responses in just 5 minutes — instead of a full workday at an agency\n"
-        f"• - Savings: Cost of 5⭐️ (about $0.13) per response — compared to $0.50 in agencies\n\n"
+        f"- *Speed:* I process 1000 responses in just 5 minutes — instead of a full workday at an agency\n"
+        f"- *Savings:* Cost of 5⭐️ (about $0.13) per response — compared to $0.50 in agencies\n\n"
         f"💰 *Benefits:*\n"
         f"Throughout the bot's usage, clients have saved *{total_money_saved_str}* and *{total_time_saved_str}* compared to manual processing.\n\n"
         f"🎁 *Special offer:*\n"
@@ -1090,7 +1091,7 @@ async def edit_categories_handler(
         )
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Текущие категории:\n\n{categories_text}\n\nEnter the number of the category you want to rename and the new name, separated by a colon. For example: 3: New category name",
+            text=f"Current categories:\n\n{categories_text}\n\nEnter the number of the category you want to rename and the new name, separated by a colon. For example: 3: New category name",
         )
         return RENAME_CATEGORY
     elif query.data == "finish_editing":
@@ -1101,7 +1102,7 @@ async def edit_categories_handler(
         )
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Текущие категории:\n\n{categories_text}\n\nStart analysis?",
+            text=f"Current categories:\n\n{categories_text}\n\nStart analysis?",
             reply_markup=InlineKeyboardMarkup(
                 [
                     [
@@ -1175,7 +1176,7 @@ async def delete_categories_handler(
         )
 
         await update.message.reply_text(
-            f"Категории удалены. Текущие категории:\n\n{categories_text}\n\nВыберите следующее действие:",
+            f"Categories removed. Current categories:\n\n{categories_text}\n\nSelect the following action:",
             reply_markup=InlineKeyboardMarkup(
                 [
                         [InlineKeyboardButton("🗑️ Delete categories", callback_data="delete_categories")],
@@ -1189,7 +1190,7 @@ async def delete_categories_handler(
     except Exception as e:
         logger.error(f"Ошибка в delete_categories_handler: {e}")
         await update.message.reply_text(
-            "Произошла ошибка при удалении категорий. Пожалуйста, попробуйте еще раз."
+            "An error occurred while deleting categories. Please try again."
         )
         return EDIT_CATEGORIES
 
@@ -1213,7 +1214,7 @@ async def add_category_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         
         if not message_text:
             await update.message.reply_text(
-                "❌ Вы не отправили никаких категорий. Пожалуйста, отправьте категории через запятые или переносы строк."
+                "❌ You have not submitted any categories. Please submit categories using commas or line breaks."
             )
             return EDIT_CATEGORIES
 
@@ -1223,7 +1224,7 @@ async def add_category_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
         if not categories:
             await update.message.reply_text(
-                "❌ Не удалось распознать категории. Пожалуйста, убедитесь, что вы правильно разделили их запятыми или переносами строк."
+                "❌ Failed to recognise the categories. Please make sure you separate them correctly with commas or line breaks."
             )
             return EDIT_CATEGORIES
 
