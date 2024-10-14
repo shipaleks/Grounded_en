@@ -490,9 +490,9 @@ Categories: [comma separated list of categories].
             else:
                 return 2
 
-        df["Оценка"] = df.apply(evaluate_row, axis=1)
+        df["Score"] = df.apply(evaluate_row, axis=1)
 
-        if df["Оценка"].min() >= 2:
+        if df["Score"].min() >= 2:
             logger.info("Все ответы имеют максимальную оценку.")
             break
         else:
@@ -500,7 +500,7 @@ Categories: [comma separated list of categories].
                 f"Итерация {iteration+1}: Повторная категоризация ответов с низкой оценкой."
             )
 
-            df_to_retry = df[df["Оценка"] < 2].copy()
+            df_to_retry = df[df["Score"] < 2].copy()
 
             def retry_process_answer(args):
                 idx, row = args
