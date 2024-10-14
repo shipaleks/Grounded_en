@@ -338,7 +338,7 @@ def create_categories(
 import time
 
 def categorize_answers(df, open_answer_column, categories):
-    df["All Categories"] = ""
+    df["All categories"] = ""
     df["Rationale"] = ""
     df["Codes"] = ""
     df["Score"] = 0
