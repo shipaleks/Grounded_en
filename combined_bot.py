@@ -1020,8 +1020,8 @@ async def column_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         keyboard = [
             [
-                InlineKeyboardButton("Да", callback_data="yes"),
-                InlineKeyboardButton("Нет", callback_data="no"),
+                InlineKeyboardButton("Yes", callback_data="yes"),
+                InlineKeyboardButton("No", callback_data="no"),
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1104,8 +1104,8 @@ async def edit_categories_handler(
             reply_markup=InlineKeyboardMarkup(
                 [
                     [
-                        InlineKeyboardButton("Да", callback_data="start_analysis"),
-                        InlineKeyboardButton("Нет", callback_data="cancel"),
+                        InlineKeyboardButton("Yes", callback_data="start_analysis"),
+                        InlineKeyboardButton("No", callback_data="cancel"),
                     ]
                 ]
             ),
@@ -1179,10 +1179,10 @@ async def delete_categories_handler(
             f"Категории удалены. Текущие категории:\n\n{categories_text}\n\nВыберите следующее действие:",
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [InlineKeyboardButton("🗑️ Удалить категории", callback_data="delete_categories")],
-                    [InlineKeyboardButton("➕ Добавить категорию", callback_data="add_category")],
-                    [InlineKeyboardButton("✏️ Изменить название категории", callback_data="rename_category")],
-                    [InlineKeyboardButton("🚀 Запустить анализ", callback_data="finish_editing")],
+                        [InlineKeyboardButton("🗑️ Delete categories", callback_data="delete_categories")],
+                        [InlineKeyboardButton("➕ Add category", callback_data="add_category")],
+                        [InlineKeyboardButton("✏️ Rename category", callback_data="rename_category")],
+                        [InlineKeyboardButton("🚀 Start analysis", callback_data="finish_editing")],
                 ]
             ),
         )
