@@ -338,19 +338,19 @@ def create_categories(
 import time
 
 def categorize_answers(df, open_answer_column, categories):
-    df["All Categories"] = ""
+    df["All categories"] = ""
     df["Rationale"] = ""
     df["Codes"] = ""
     df["Score"] = 0
 
-    # Ensure "Other" and "Irrelevant" are in the categories
+    # Ensure "Другое" and "Нерелевантный ответ" are in the categories
     if "Other" not in categories:
         categories.append("Other")
     if "Irrelevant" not in categories:
         categories.append("Irrelevant")
 
     category_to_code = {category: idx + 1 for idx, category in enumerate(categories)}
-    code_to_category = {idx + 1: category for idx, category in enumerate(categories)}
+    code_to_category = {idx: category for category, idx in category_to_code.items()}
 
     def create_messages(answer, categories):
         categories_list = ", ".join(categories)
@@ -362,7 +362,7 @@ Categories: {categories_list}
 
 Answer: "{answer}"
 
-Analyse the response and indicate the most appropriate categories from the list provided. If the answer is empty or 'nan', categorize it as 'Irrelevant'. If the answer is meaningful but does not fit any of the suggested categories, categorize it as 'Other'. Make sure that there are no categories similar to 'Other', such as 'Don't Know', and if there are, use them. Do not use the categories 'Other' and 'Irrelevant' with other categories. Do not use the 'Other' and 'Irrelevant' categories unnecessarily, especially if there are more appropriate categories. Justify your choices.
+Analyse the response and indicate the most appropriate categories from the list provided. If the answer is empty or empty ('nan'), categorise it as 'Irrelevant'. If the answer is meaningful but does not fit any of the suggested categories, categorise it as 'Other'. Make sure that there are no categories similar to 'Other', such as 'Don't Know', and if there are, use them. Do not use the categories 'Other' and 'Irrelevant' with other categories. Do not use the 'Other' and 'Irrelevant' categories unnecessarily, especially if there are more appropriate categories. Justify your choices.
 
 Return the result in the format:
 
@@ -404,7 +404,8 @@ Categories: [comma separated list of categories].
                 elif line.startswith("Categories:"):
                     categories_str = line.replace("Categories:", "").strip()
 
-            # Extract categories from the "Categories" field
+
+            # Extract categories from the "Категории" field
             assigned_categories = set()
             for cat in categories_str.split(","):
                 cat = cat.strip()
@@ -418,7 +419,7 @@ Categories: [comma separated list of categories].
                     if category in ["Other", "Irrelevant"]:
                         continue
                     category_mentioned = category.lower() in reasoning.lower()
-                    negated = any(neg in reasoning.lower() for neg in negation_words)
+                    negated = any(neg in reasoning.lower().split() for neg in negation_words)
                     if category_mentioned and not negated:
                         assigned_categories.add(category)
             
@@ -433,8 +434,8 @@ Categories: [comma separated list of categories].
             return idx, all_categories_str, reasoning, codes_str
 
         except Exception as e:
-            logger.error(f"Error processing the answer: {e}")
-            return idx, "Error", "An error occurred while processing the answer.", ""
+            logger.error(f"Ошибка при обработке ответа: {e}")
+            return idx, "Ошибка", "Ошибка при обработке ответа.", ""
 
     results = []
     futures = []
@@ -445,15 +446,14 @@ Categories: [comma separated list of categories].
         for future in tqdm(
             concurrent.futures.as_completed(futures),
             total=len(futures),
-            desc="Categorizing answers",
+            desc="Категоризация ответов",
         ):
             idx, categories_result, reasoning_result, codes_result = future.result()
-            df.at[idx, "All Categories"] = categories_result
+            df.at[idx, "All categories"] = categories_result
             df.at[idx, "Rationale"] = reasoning_result
             df.at[idx, "Codes"] = codes_result
 
     return df, category_to_code, code_to_category
-
 
 
 def test_categorizations(
@@ -604,12 +604,19 @@ def analyze_category_usage(df, categories, rare_threshold=0.3, max_rare_categori
 
 
 def create_category_columns(df, categories, category_to_code):
+    # Ensure "Other" and "Irrelevant" are in the categories
+    if "Other" not in categories:
+        categories.append("Other")
+        category_to_code["Other"] = max(category_to_code.values()) + 1
+    if "Irrelevant" not in categories:
+        categories.append("Irrelevant")
+        category_to_code["Irrelevant"] = max(category_to_code.values()) + 1
+
     for category, code in category_to_code.items():
         column_name = f"{code}. {category}"
-        if column_name not in df.columns:
-            df[column_name] = df["Codes"].apply(
-                lambda x: category if str(code) in x.split(", ") else ""
-            )
+        df[column_name] = df["Codes"].apply(
+            lambda x: category if str(code) in x.split(", ") else ""
+        )
     return df
 
 
@@ -617,53 +624,60 @@ def create_category_columns(df, categories, category_to_code):
 
 
 
-
-def save_results(df, category_to_code, code_to_category):
-    # Remove the "Score" column if it exists
+def save_results(df, code_to_category):
+    # Удаление столбца "Оценка", если он существует
     if "Score" in df.columns:
         df = df.drop(columns=["Score"])
         logger.info('"Score" column removed from the DataFrame.')
 
-    # Add separate category columns using category names and codes
+    # Добавление отдельных столбцов для категорий с использованием имен категорий
     categories = list(code_to_category.values())
-    df = create_category_columns(df, categories, category_to_code)
+    df = create_category_columns(df, categories, code_to_category)
     logger.info("Separate category columns added to the DataFrame.")
 
-    # Calculate the frequency of each category
-    all_categories = df["All Categories"].dropna().apply(lambda x: [cat.strip() for cat in x.split(",")])
+    # Расчет частоты каждой категории
+    all_categories = df["All categories"].dropna().apply(lambda x: [cat.strip() for cat in x.split(",")])
     all_categories = all_categories.explode()
     category_counts = all_categories.value_counts()
 
-    # Ensure keys and values are lists
+    # Убедитесь, что ключи и значения являются списками
     codes = list(code_to_category.keys())
     category_names = list(code_to_category.values())
 
-    # Create DataFrame for "Codes and Categories"
+    # Создание DataFrame для "Коды и категории"
     code_category_freq = pd.DataFrame({
         'Code': codes,
         'Category': category_names,
         'Frequency': [category_counts.get(cat, 0) for cat in category_names]
     })
 
-    # Ensure columns have correct data types
+    # Убедитесь, что столбцы имеют правильные типы данных
     code_category_freq['Code'] = code_category_freq['Code'].astype(int)
     code_category_freq['Category'] = code_category_freq['Category'].astype(str)
     code_category_freq['Frequency'] = code_category_freq['Frequency'].astype(int)
 
     code_category_freq = code_category_freq.sort_values('Code')
 
-    # Create buffer for Excel file
+    # Создание буфера для Excel файла
     xlsx_buffer = io.BytesIO()
     with pd.ExcelWriter(xlsx_buffer, engine="xlsxwriter") as writer:
-        # Add "Results" sheet
+        # Добавление листа "Результаты"
         df.to_excel(writer, index=False, sheet_name="Results")
         logger.info("Results sheet added to Excel.")
 
-        # Add "Codes and Categories" sheet
-        code_category_freq.to_excel(writer, index=False, sheet_name="Codes and Categories")
+        # Добавление листа "Коды и категории"
+        code_category_freq.to_excel(writer, index=False, sheet_name="Codes and categories")
         logger.info("Codes, Categories, and Frequencies sheet added to Excel.")
 
-    # Plot category distribution
+        # **Удаляем или комментируем код форматирования**
+        # workbook = writer.book
+        # codes_sheet = writer.sheets["Codes and categories"]
+        # format1 = workbook.add_format({'num_format': '0', 'align': 'left'})
+        # codes_sheet.set_column('A:A', 10, format1)
+        # codes_sheet.set_column('B:B', 30, format1)
+        # codes_sheet.set_column('C:C', 15, format1)
+
+    # Построение графика распределения категорий (без изменений)
     sns.set(style="whitegrid", rc={
         "grid.color": "#F0F1F4",
         "grid.linestyle": "--",
@@ -692,14 +706,13 @@ def save_results(df, category_to_code, code_to_category):
 
     plt.tight_layout()
 
-    # Save plot to buffer
+    # Сохранение графика в буфер
     png_buffer = io.BytesIO()
     plt.savefig(png_buffer, format="png", facecolor=plt.gcf().get_facecolor())
     plt.close()
     logger.info("Distribution chart generated and saved to buffer.")
 
     return xlsx_buffer.getvalue(), png_buffer.getvalue()
-
 
 
 
