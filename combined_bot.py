@@ -451,7 +451,7 @@ Categories: [comma separated list of categories].
             idx, categories_result, reasoning_result, codes_result = future.result()
             df.at[idx, "All categories"] = categories_result
             df.at[idx, "Rationale"] = reasoning_result
-            df.at[idx, "Коды"] = codes_result
+            df.at[idx, "Codes"] = codes_result
 
     return df, category_to_code, code_to_category
 
@@ -562,7 +562,7 @@ Categories: [comma separated list of categories].
                     idx, categories_result, reasoning_result, codes_result = future.result()
                     df.at[idx, "All categories"] = categories_result
                     df.at[idx, "Rationale"] = reasoning_result
-                    df.at[idx, "Коды"] = codes_result
+                    df.at[idx, "Codes"] = codes_result
 
     return df
 
@@ -614,7 +614,7 @@ def create_category_columns(df, categories, category_to_code):
 
     for category, code in category_to_code.items():
         column_name = f"{code}. {category}"
-        df[column_name] = df["Коды"].apply(
+        df[column_name] = df["Codes"].apply(
             lambda x: category if str(code) in x.split(", ") else ""
         )
     return df
@@ -626,9 +626,9 @@ def create_category_columns(df, categories, category_to_code):
 
 def save_results(df, code_to_category):
     # Удаление столбца "Оценка", если он существует
-    if "Оценка" in df.columns:
-        df = df.drop(columns=["Оценка"])
-        logger.info('"Оценка" column removed from the DataFrame.')
+    if "Score" in df.columns:
+        df = df.drop(columns=["Score"])
+        logger.info('"Score" column removed from the DataFrame.')
 
     # Добавление отдельных столбцов для категорий с использованием имен категорий
     categories = list(code_to_category.values())
@@ -646,32 +646,32 @@ def save_results(df, code_to_category):
 
     # Создание DataFrame для "Коды и категории"
     code_category_freq = pd.DataFrame({
-        'Код': codes,
-        'Категория': category_names,
-        'Частота': [category_counts.get(cat, 0) for cat in category_names]
+        'Code': codes,
+        'Category': category_names,
+        'Frequency': [category_counts.get(cat, 0) for cat in category_names]
     })
 
     # Убедитесь, что столбцы имеют правильные типы данных
-    code_category_freq['Код'] = code_category_freq['Код'].astype(int)
-    code_category_freq['Категория'] = code_category_freq['Категория'].astype(str)
-    code_category_freq['Частота'] = code_category_freq['Частота'].astype(int)
+    code_category_freq['Code'] = code_category_freq['Code'].astype(int)
+    code_category_freq['Category'] = code_category_freq['Category'].astype(str)
+    code_category_freq['Frequency'] = code_category_freq['Frequency'].astype(int)
 
-    code_category_freq = code_category_freq.sort_values('Код')
+    code_category_freq = code_category_freq.sort_values('Code')
 
     # Создание буфера для Excel файла
     xlsx_buffer = io.BytesIO()
     with pd.ExcelWriter(xlsx_buffer, engine="xlsxwriter") as writer:
         # Добавление листа "Результаты"
-        df.to_excel(writer, index=False, sheet_name="Результаты")
+        df.to_excel(writer, index=False, sheet_name="Results")
         logger.info("Results sheet added to Excel.")
 
         # Добавление листа "Коды и категории"
-        code_category_freq.to_excel(writer, index=False, sheet_name="Коды и категории")
+        code_category_freq.to_excel(writer, index=False, sheet_name="Codes and categories")
         logger.info("Codes, Categories, and Frequencies sheet added to Excel.")
 
         # **Удаляем или комментируем код форматирования**
         # workbook = writer.book
-        # codes_sheet = writer.sheets["Коды и категории"]
+        # codes_sheet = writer.sheets["Codes and categories"]
         # format1 = workbook.add_format({'num_format': '0', 'align': 'left'})
         # codes_sheet.set_column('A:A', 10, format1)
         # codes_sheet.set_column('B:B', 30, format1)
@@ -1596,7 +1596,7 @@ async def handle_rare_categories(update: Update, context: ContextTypes.DEFAULT_T
         return await process_final_results(update, context)
 
     rare_categories_text = "\n".join(
-        [f"{i}. {cat} (упоминаний: {count})" for i, (cat, count) in enumerate(rare_categories_with_counts, start=1)]
+        [f"{i}. {cat} ({count})" for i, (cat, count) in enumerate(rare_categories_with_counts, start=1)]
     )
 
     message = (
@@ -1619,7 +1619,7 @@ async def ask_for_categories_to_remove(update: Update, context: ContextTypes.DEF
     rare_categories_with_counts = context.user_data.get("rare_categories_with_counts", [])
 
     rare_categories_text = "\n".join(
-        [f"{i}. {cat} (упоминаний: {count})" for i, (cat, count) in enumerate(rare_categories_with_counts, start=1)]
+        [f"{i}. {cat} ({count})" for i, (cat, count) in enumerate(rare_categories_with_counts, start=1)]
     )
 
     message = (
@@ -1725,7 +1725,7 @@ async def prompt_for_categories_to_remove(update: Update, context: ContextTypes.
     rare_categories_with_counts = context.user_data.get("rare_categories_with_counts", [])
 
     rare_categories_text = "\n".join(
-        [f"{i}. {cat} (упоминаний: {count})" for i, (cat, count) in enumerate(rare_categories_with_counts, start=1)]
+        [f"{i}. {cat} ({count})" for i, (cat, count) in enumerate(rare_categories_with_counts, start=1)]
     )
 
     message = (
