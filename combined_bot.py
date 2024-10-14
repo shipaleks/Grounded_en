@@ -794,7 +794,7 @@ def process_survey_data_sync(file_content, file_name, survey_question, open_answ
     )
     categories, rare_categories, common_categories = analyze_category_usage(df, categories)
     
-    df = create_category_columns(df, categories, category_to_code)
+    df = create_category_columns(df, code_to_category)
 
     return df, category_to_code, code_to_category, rare_categories
 
