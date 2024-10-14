@@ -604,19 +604,12 @@ def analyze_category_usage(df, categories, rare_threshold=0.3, max_rare_categori
 
 
 def create_category_columns(df, categories, category_to_code):
-    # Ensure "Other" and "Irrelevant" are in the categories
-    if "Other" not in categories:
-        categories.append("Other")
-        category_to_code["Other"] = max(category_to_code.values()) + 1
-    if "Irrelevant" not in categories:
-        categories.append("Irrelevant")
-        category_to_code["Irrelevant"] = max(category_to_code.values()) + 1
-
     for category, code in category_to_code.items():
         column_name = f"{code}. {category}"
-        df[column_name] = df["Codes"].apply(
-            lambda x: category if str(code) in x.split(", ") else ""
-        )
+        if column_name not in df.columns:
+            df[column_name] = df["Codes"].apply(
+                lambda x: category if str(code) in x.split(", ") else ""
+            )
     return df
 
 
@@ -624,60 +617,53 @@ def create_category_columns(df, categories, category_to_code):
 
 
 
-def save_results(df, code_to_category):
-    # Удаление столбца "Оценка", если он существует
+
+def save_results(df, category_to_code, code_to_category):
+    # Remove "Score" column if it exists
     if "Score" in df.columns:
         df = df.drop(columns=["Score"])
         logger.info('"Score" column removed from the DataFrame.')
 
-    # Добавление отдельных столбцов для категорий с использованием имен категорий
-    categories = list(code_to_category.values())
-    df = create_category_columns(df, categories, code_to_category)
+    # Add separate columns for categories using category names
+    categories = list(category_to_code.keys())  # List of category names
+    df = create_category_columns(df, categories, category_to_code)  # Pass category_to_code correctly
     logger.info("Separate category columns added to the DataFrame.")
 
-    # Расчет частоты каждой категории
-    all_categories = df["All categories"].dropna().apply(lambda x: [cat.strip() for cat in x.split(",")])
+    # Compute category frequencies
+    all_categories = df["All Categories"].dropna().apply(lambda x: [cat.strip() for cat in x.split(",")])
     all_categories = all_categories.explode()
     category_counts = all_categories.value_counts()
 
-    # Убедитесь, что ключи и значения являются списками
+    # Ensure keys and values are lists
     codes = list(code_to_category.keys())
     category_names = list(code_to_category.values())
 
-    # Создание DataFrame для "Коды и категории"
+    # Create DataFrame for "Codes and Categories"
     code_category_freq = pd.DataFrame({
         'Code': codes,
         'Category': category_names,
         'Frequency': [category_counts.get(cat, 0) for cat in category_names]
     })
 
-    # Убедитесь, что столбцы имеют правильные типы данных
+    # Ensure columns have correct data types
     code_category_freq['Code'] = code_category_freq['Code'].astype(int)
     code_category_freq['Category'] = code_category_freq['Category'].astype(str)
     code_category_freq['Frequency'] = code_category_freq['Frequency'].astype(int)
 
     code_category_freq = code_category_freq.sort_values('Code')
 
-    # Создание буфера для Excel файла
+    # Create buffer for Excel file
     xlsx_buffer = io.BytesIO()
     with pd.ExcelWriter(xlsx_buffer, engine="xlsxwriter") as writer:
-        # Добавление листа "Результаты"
+        # Add "Results" sheet
         df.to_excel(writer, index=False, sheet_name="Results")
         logger.info("Results sheet added to Excel.")
 
-        # Добавление листа "Коды и категории"
-        code_category_freq.to_excel(writer, index=False, sheet_name="Codes and categories")
+        # Add "Codes and Categories" sheet
+        code_category_freq.to_excel(writer, index=False, sheet_name="Codes and Categories")
         logger.info("Codes, Categories, and Frequencies sheet added to Excel.")
 
-        # **Удаляем или комментируем код форматирования**
-        # workbook = writer.book
-        # codes_sheet = writer.sheets["Codes and categories"]
-        # format1 = workbook.add_format({'num_format': '0', 'align': 'left'})
-        # codes_sheet.set_column('A:A', 10, format1)
-        # codes_sheet.set_column('B:B', 30, format1)
-        # codes_sheet.set_column('C:C', 15, format1)
-
-    # Построение графика распределения категорий (без изменений)
+    # Plot category distribution
     sns.set(style="whitegrid", rc={
         "grid.color": "#F0F1F4",
         "grid.linestyle": "--",
@@ -706,13 +692,14 @@ def save_results(df, code_to_category):
 
     plt.tight_layout()
 
-    # Сохранение графика в буфер
+    # Save plot to buffer
     png_buffer = io.BytesIO()
     plt.savefig(png_buffer, format="png", facecolor=plt.gcf().get_facecolor())
     plt.close()
     logger.info("Distribution chart generated and saved to buffer.")
 
     return xlsx_buffer.getvalue(), png_buffer.getvalue()
+
 
 
 
@@ -1866,7 +1853,7 @@ async def process_final_results(update: Update, context: ContextTypes.DEFAULT_TY
         update_user_free_answers(user_id, new_free_answers)
 
         free_df = df.head(free_answers)
-        xlsx_content, png_content = save_results(free_df, code_to_category)
+        xlsx_content, png_content = save_results(df, category_to_code, code_to_category)
         await send_results(update, context, xlsx_content, png_content)
 
         if paid_answers > 0:
