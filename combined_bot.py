@@ -623,101 +623,81 @@ def create_category_columns(df, categories, category_to_code):
 
 
 
-import seaborn as sns
-import matplotlib.pyplot as plt
-import pandas as pd
-import io
-
 def save_results(df, code_to_category):
-  # Remove the "Оценка" column if it exists
+    # Удаление столбца "Оценка", если он существует
     if "Оценка" in df.columns:
         df = df.drop(columns=["Оценка"])
         logger.info('"Оценка" column removed from the DataFrame.')
 
-    # Add separate category columns using category names
+    # Добавление отдельных столбцов для категорий с использованием имен категорий
     categories = list(code_to_category.values())
     df = create_category_columns(df, categories, code_to_category)
     logger.info("Separate category columns added to the DataFrame.")
 
-    # Calculate frequency of each category
+    # Расчет частоты каждой категории
     all_categories = df["Все категории"].dropna().apply(lambda x: [cat.strip() for cat in x.split(",")])
     all_categories = all_categories.explode()
     category_counts = all_categories.value_counts()
 
+    # Убедитесь, что ключи и значения являются списками
+    codes = list(code_to_category.keys())
+    category_names = list(code_to_category.values())
+
+    # Создание DataFrame для "Коды и категории"
+    code_category_freq = pd.DataFrame({
+        'Код': codes,
+        'Категория': category_names,
+        'Частота': [category_counts.get(cat, 0) for cat in category_names]
+    })
+
+    # Убедитесь, что столбцы имеют правильные типы данных
+    code_category_freq['Код'] = code_category_freq['Код'].astype(int)
+    code_category_freq['Категория'] = code_category_freq['Категория'].astype(str)
+    code_category_freq['Частота'] = code_category_freq['Частота'].astype(int)
+
+    code_category_freq = code_category_freq.sort_values('Код')
+
+    # Создание буфера для Excel файла
     xlsx_buffer = io.BytesIO()
     with pd.ExcelWriter(xlsx_buffer, engine="xlsxwriter") as writer:
-        # Add instruction sheet
-        intro_text = """
-Это внутренний ИИ-категоризатор открытых ответов, сделанный в UX лаборатории Яндекса.
-Проанализированные ответы находятся на следующей вкладке.
-По вопросам можно писать Лёше Шипулину shipaleks@ (t.me/bdndjcmf)
-"""
-        intro_sentences = [sentence.strip() for sentence in intro_text.strip().split('\n') if sentence.strip()]
-        intro_df = pd.DataFrame(intro_sentences, columns=["Инструкция"])
-        intro_df.to_excel(writer, index=False, sheet_name="Инструкция")
-        logger.info("Instruction sheet added to Excel.")
-
-        # Add results sheet
+        # Добавление листа "Результаты"
         df.to_excel(writer, index=False, sheet_name="Результаты")
         logger.info("Results sheet added to Excel.")
 
-        # Add codes, categories, and frequencies sheet
-        code_category_freq = pd.DataFrame({
-            'Код': code_to_category.keys(),
-            'Категория': code_to_category.values(),
-            'Частота': [category_counts.get(cat, 0) for cat in code_to_category.values()]
-        })
-        code_category_freq = code_category_freq.sort_values('Код')
+        # Добавление листа "Коды и категории"
         code_category_freq.to_excel(writer, index=False, sheet_name="Коды и категории")
         logger.info("Codes, Categories, and Frequencies sheet added to Excel.")
 
-        # Format instruction sheet
-        workbook = writer.book
-        instruction_sheet = writer.sheets["Инструкция"]
-        instruction_format = workbook.add_format({
-            'text_wrap': True, 'valign': 'top', 'font_size': 12,
-            'font_name': 'Calibri', 'font_color': '#000000'
-        })
-        instruction_sheet.set_column('A:A', 100, instruction_format)
-        for row_num in range(len(intro_sentences)):
-            instruction_sheet.set_row(row_num, 30)
+        # **Удаляем или комментируем код форматирования**
+        # workbook = writer.book
+        # codes_sheet = writer.sheets["Коды и категории"]
+        # format1 = workbook.add_format({'num_format': '0', 'align': 'left'})
+        # codes_sheet.set_column('A:A', 10, format1)
+        # codes_sheet.set_column('B:B', 30, format1)
+        # codes_sheet.set_column('C:C', 15, format1)
 
-    # Построение графика с использованием seaborn
-    all_categories = (
-        df["Все категории"]
-        .dropna()
-        .apply(lambda x: [cat.strip() for cat in x.split(",")])
-    )
-    all_categories = all_categories.explode()
-    category_counts = all_categories.value_counts()
-
-    # Настройка стиля и цветов с добавлением серой сетки
+    # Построение графика распределения категорий (без изменений)
     sns.set(style="whitegrid", rc={
-        "grid.color": "#F0F1F4",          # Цвет сетки
-        "grid.linestyle": "--",        # Стиль линий сетки
-        "grid.linewidth": 1.5           # Толщина линий сетки
+        "grid.color": "#F0F1F4",
+        "grid.linestyle": "--",
+        "grid.linewidth": 1.5
     })
 
-    plt.figure(figsize=(12, 6), facecolor='#F0F1F4')  # Устанавливаем цвет фона
+    plt.figure(figsize=(12, 6), facecolor='#F0F1F4')
 
-    # Создаём горизонтальную гистограмму с заданным цветом столбцов
     ax = sns.barplot(x=category_counts.values, y=category_counts.index, color='#F8604A')
 
-    # Настройка цветов текста
     ax.set_title("Распределение категорий", color='black', fontsize=16, fontweight='bold')
     ax.set_xlabel("Количество", color='black', fontsize=12)
     ax.set_ylabel("Категории", color='black', fontsize=12)
 
-    # Настройка цветов осей и подписей
-    ax.tick_params(colors='black', labelsize=10)  # Цвет текста на осях
+    ax.tick_params(colors='black', labelsize=10)
 
-    # Настройка цвета линий осей
-    ax.spines['bottom'].set_color('#F0F1F4')  # Цвет линий осей
+    ax.spines['bottom'].set_color('#F0F1F4')
     ax.spines['left'].set_color('#F0F1F4')
     ax.spines['top'].set_color('#F0F1F4')
     ax.spines['right'].set_color('#F0F1F4')
 
-    # Добавление меток на столбцы
     for p in ax.patches:
         ax.annotate(format(p.get_width(), '.0f'),
                     (p.get_width() + 1, p.get_y() + p.get_height() / 2),
