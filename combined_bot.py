@@ -775,7 +775,7 @@ def process_survey_data(
     )
 
     # **Add this line to create category columns**
-    # df = create_category_columns(df, categories, category_to_code)
+    # df = create_category_columns(df, category_to_code)
 
     # **Now return the modified DataFrame with the new columns**
     return df, category_to_code, code_to_category, rare_categories
@@ -1698,7 +1698,7 @@ async def remove_categories_input_handler(update: Update, context: ContextTypes.
         )
         
         # Создаем новые столбцы категорий
-        df = create_category_columns(df, list(category_to_code.keys()), category_to_code)
+        df = create_category_columns(df, code_to_category)
         
         # Повторный анализ категорий
         categories, rare_categories, common_categories = analyze_category_usage(df, list(category_to_code.keys()))
