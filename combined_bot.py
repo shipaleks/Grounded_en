@@ -918,35 +918,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Установка значения по умолчанию для max_categories
     context.user_data["max_categories"] = 25  # Значение по умолчанию
 
-
     # Асинхронное получение общего количества проанализированных ответов из Firebase
     try:
         loop = asyncio.get_event_loop()
         total_answers = await loop.run_in_executor(None, get_total_answers)
+        total_money_saved = await loop.run_in_executor(None, get_total_money_saved)
+        total_time_saved_min = await loop.run_in_executor(None, get_total_time_saved_min)
     except Exception as e:
-        logger.error(f"Не удалось получить total_answers: {e}", exc_info=True)
-        total_answers = 0  # По умолчанию 0, если произошла ошибка
+        logger.error(f"Не удалось получить статистику: {e}", exc_info=True)
+        total_answers = 0
+        total_money_saved = 0.0
+        total_time_saved_min = 0.0
 
     # Логирование события запуска
     logger.info(f"Пользователь {update.effective_user.id} запустил бота. Общее количество проанализированных ответов: {total_answers}")
 
-    # Calculation of savings
-    agency_cost_per_answer = 0.50  # USD
-    bot_cost_per_answer = 0.13     # USD
-    agency_time_per_answer_min = 0.5  # minutes (30 seconds)
-    bot_time_per_1000_answers_min = 5   # minutes
-    bot_time_per_answer_min = bot_time_per_1000_answers_min / 1000  # 0.005 minutes
-    
-    # Total savings calculation
-    total_money_saved = (agency_cost_per_answer - bot_cost_per_answer) * total_answers
-    total_time_saved_min = (agency_time_per_answer_min - bot_time_per_answer_min) * total_answers
-    
-    # Formatting savings for readability
+    # Форматирование экономии для удобочитаемости
     total_money_saved_str = f"${total_money_saved:,.2f}"
     if total_time_saved_min >= 60:
-        hours = total_time_saved_min // 60
-        minutes = total_time_saved_min % 60
-        total_time_saved_str = f"{int(hours)} hours {int(minutes)} minutes"
+        hours = int(total_time_saved_min // 60)
+        minutes = int(total_time_saved_min % 60)
+        total_time_saved_str = f"{hours} hours {minutes} minutes"
     else:
         total_time_saved_str = f"{total_time_saved_min:.2f} minutes"
 
@@ -966,10 +958,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         f"🚀 *Ready to start?*\n"
         f"*Upload your data file (.xlsx or .csv).*\n"
         f"The file should have only one sheet."
-            )
+    )
 
     await update.message.reply_text(greeting_message, parse_mode='Markdown')
     return UPLOAD
+
+def get_total_money_saved() -> float:
+    """
+    Получает общее количество сэкономленных денег из Firebase.
+    """
+    stats_ref = ref.child('stats').child('total_money_saved')
+    total = stats_ref.get()
+    if total is None:
+        return 0.0
+    return float(total)
+
+def get_total_time_saved_min() -> float:
+    """
+    Получает общее количество сэкономленного времени из Firebase.
+    """
+    stats_ref = ref.child('stats').child('total_time_saved')
+    total = stats_ref.get()
+    if total is None:
+        return 0.0
+    return float(total)
 
 
 
@@ -1816,34 +1828,35 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     else:
         await query.answer(ok=False, error_message="Something went wrong...")
 
-def update_stats(user_id: str, answers_analyzed: int, money_saved: float, time_saved: float):
+def update_stats(user_id: str, paid_answers: int, money_saved: float, time_saved: float):
     """
     Updates global and user statistics.
 
     Args:
         user_id (str): Telegram user ID.
-        answers_analyzed (int): Number of answers analyzed.
+        paid_answers (int): Number of paid answers analyzed.
         money_saved (float): Money saved (in USD).
         time_saved (float): Time saved (in minutes).
     """
     try:
         # Update global statistics
         stats_ref = ref.child('stats')
-        stats_ref.child('total_answers').transaction(lambda current: (current or 0) + answers_analyzed)
+        stats_ref.child('total_answers').transaction(lambda current: (current or 0) + paid_answers)
         stats_ref.child('total_surveys').transaction(lambda current: (current or 0) + 1)
         stats_ref.child('total_money_saved').transaction(lambda current: (current or 0.0) + money_saved)
         stats_ref.child('total_time_saved').transaction(lambda current: (current or 0.0) + time_saved)
         
         # Update user statistics
         user_ref = ref.child('users').child(str(user_id))
-        user_ref.child('answers_analyzed').transaction(lambda current: (current or 0) + answers_analyzed)
+        user_ref.child('answers_analyzed').transaction(lambda current: (current or 0) + paid_answers)
         user_ref.child('money_saved').transaction(lambda current: (current or 0.0) + money_saved)
         user_ref.child('time_saved').transaction(lambda current: (current or 0.0) + time_saved)
         
-        logger.info(f"Updated statistics for user {user_id}: +{answers_analyzed} answers, +{money_saved} USD, +{time_saved} min.")
+        logger.info(f"Updated statistics for user {user_id}: +{paid_answers} answers, +{money_saved} USD, +{time_saved} min.")
     except Exception as e:
         logger.error(f"Failed to update statistics for user {user_id}: {e}")
         raise e  # Re-raise the exception for handling in the calling code
+
 
 
 
@@ -1898,13 +1911,13 @@ async def process_final_results(update: Update, context: ContextTypes.DEFAULT_TY
     bot_time_per_1000_answers_min = 5   # minutes
     bot_time_per_answer_min = bot_time_per_1000_answers_min / 1000  # 0.005 minutes
     
-    money_saved = (agency_cost_per_answer - bot_cost_per_answer) * total_answers
-    time_saved_min = (agency_time_per_answer_min - bot_time_per_answer_min) * total_answers
+    money_saved = (agency_cost_per_answer - bot_cost_per_answer) * paid_answers
+    time_saved_min = (agency_time_per_answer_min - bot_time_per_answer_min) * paid_answers
     
     # Updating statistics
     try:
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, update_stats, user_id, total_answers, money_saved, time_saved_min)
+        await loop.run_in_executor(None, update_stats, user_id, paid_answers, money_saved, time_saved_min)
     except Exception as e:
         logger.error(f"Failed to update statistics for user {user_id}: {e}")
         await context.bot.send_message(
