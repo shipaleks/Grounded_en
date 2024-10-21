@@ -134,8 +134,10 @@ def suggest_categories(df, open_answer_column, existing_categories, survey_quest
     answers_series = df[open_answer_column].dropna().astype(str)
     total_answers = len(answers_series)
     sample_size = min(500, total_answers)
+    
+    # Выбираем случайные ответы
     sample_answers = answers_series.sample(n=sample_size, random_state=42).tolist()
-
+    
     existing_categories_text = (
         ", ".join(existing_categories)
         if existing_categories
