@@ -605,22 +605,55 @@ def analyze_category_usage(df, categories, rare_threshold=0.3, max_rare_categori
 
 
 
+
+
 def create_category_columns(df, code_to_category):
-    # Ensure "Other" and "Irrelevant" are in the code_to_category
+    """
+    Создаёт отдельные столбцы для каждой категории в DataFrame.
+    Удаляет столбцы для категорий, которые были удалены.
+    
+    Args:
+        df (pd.DataFrame): Исходный DataFrame с данными опроса.
+        code_to_category (dict): Словарь, сопоставляющий код категории с её названием.
+    
+    Returns:
+        pd.DataFrame: Модифицированный DataFrame с отдельными столбцами для категорий.
+    """
+    # Шаг 1: Определение существующих столбцов категорий (формат "номер. категория")
+    category_columns = [col for col in df.columns if re.match(r'^\d+\. .+', col)]
+    
+    # Шаг 2: Определение текущих названий столбцов категорий
+    current_category_columns = {f"{code}. {category}" for code, category in code_to_category.items()}
+    
+    # Шаг 3: Определение столбцов, которые нужно удалить (устаревшие категории)
+    columns_to_remove = set(category_columns) - current_category_columns
+    
+    if columns_to_remove:
+        df = df.drop(columns=columns_to_remove, errors='ignore')
+        logger.info(f"Удалены устаревшие категории: {columns_to_remove}")
+    
+    # Шаг 4: Убедитесь, что категории "Другое" и "Нерелевантный ответ" присутствуют
     if "Other" not in code_to_category.values():
         max_code = max(code_to_category.keys(), default=0)
         code_to_category[max_code + 1] = "Other"
     if "Irrelevant" not in code_to_category.values():
         max_code = max(code_to_category.keys(), default=0)
         code_to_category[max_code + 1] = "Irrelevant"
-
+    
+    # Обновление текущих столбцов категорий после добавления "Другое" и "Нерелевантный ответ"
+    current_category_columns = {f"{code}. {category}" for code, category in code_to_category.items()}
+    
+    # Шаг 5: Добавление столбцов для текущих категорий, если они ещё не существуют
     for code, category in code_to_category.items():
         column_name = f"{code}. {category}"
         if column_name not in df.columns:
             df[column_name] = df["Codes"].apply(
                 lambda x: category if str(code) in x.split(", ") else ""
             )
+            logger.info(f"Добавлен столбец категории: {column_name}")
+    
     return df
+
 
 
 
