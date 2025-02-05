@@ -2021,11 +2021,6 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         # Формирование сообщения статистики
         stats_message = (
             f"📊 *Statistics:*\n\n"
-            f"🔹 *Overall stats:*\n"
-            f"   - Total responses analysed: *{total_answers_str}*\n"
-            f"   - Total number of times the bot has been used: *{total_surveys_str}*\n"
-            f"   - Total money saved: *{total_money_saved_str}*\n"
-            f"   - Total time saved: *{total_time_saved_str}*\n\n"
             f"🔸 *Your stats:*\n"
             f"   - You have analysed responses: *{user_answers}*\n"
             f"   - You saved money: *{user_money_saved_str}*\n"
